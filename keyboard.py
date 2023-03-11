@@ -8,5 +8,7 @@ button_rules = InlineKeyboardButton('Ознакомиться с правила�
 inline_kb1 = InlineKeyboardMarkup().add(button_start_game).add(button_rules)
 
 # Кнопки для получения мемов
-button_get_memes = InlineKeyboardButton('Получить мемы', callback_data='button_get_memes')
-inline_kb2 = InlineKeyboardMarkup().add(button_get_memes)
+button_go_to_bot = InlineKeyboardButton(text="Перейти в бота", url="https://t.me/mem_haha_bot")
+button_get_memes = InlineKeyboardButton('Получить мемы',  callback_data='button_get_memes')
+inline_kb2 = InlineKeyboardMarkup().add(button_get_memes).add(button_go_to_bot)
+

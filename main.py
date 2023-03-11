@@ -22,7 +22,9 @@ async def start_game_handler(callback_query: types.CallbackQuery):
     chat_id = callback_query.message.chat.id
     await bot.send_message(chat_id, text='Начинаем! Ситуация:')
     await bot.send_message(chat_id, text=of.send_situation())
-    await bot.send_message(chat_id, 'Нажми на кнопку ниже, чтобы получить мемы', reply_markup=kb.inline_kb2)
+    await bot.send_message(chat_id, 'Нажми на кнопку ниже, чтобы получить мемы, а потом перейди в бота, чтобы разыграть карты', reply_markup=kb.inline_kb2)
+    await bot.send_message(chat_id, 'text', reply_markup=kb.button_go_to_bot)
+
 
 
 @dp.callback_query_handler(lambda c: c.data == 'button_rules')
