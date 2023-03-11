@@ -3,7 +3,6 @@ from aiogram import Bot, Dispatcher, executor, types
 import logging
 import keyboard as kb
 import open_files as of
-import sqlite3
 
 logging.basicConfig(level=logging.INFO)  # логгирование
 
@@ -22,9 +21,9 @@ async def start_game_handler(callback_query: types.CallbackQuery):
     chat_id = callback_query.message.chat.id
     await bot.send_message(chat_id, text='Начинаем! Ситуация:')
     await bot.send_message(chat_id, text=of.send_situation())
-    await bot.send_message(chat_id, 'Нажми на кнопку ниже, чтобы получить мемы, а потом перейди в бота, чтобы разыграть карты', reply_markup=kb.inline_kb2)
+    await bot.send_message(chat_id, 'Нажми на кнопку ниже, чтобы получить мемы, а потом перейди в бота, '
+                                    'чтобы разыграть карты', reply_markup=kb.inline_kb2)
     await bot.send_message(chat_id, 'text', reply_markup=kb.button_go_to_bot)
-
 
 
 @dp.callback_query_handler(lambda c: c.data == 'button_rules')
@@ -32,6 +31,7 @@ async def process_callback_button2(callback_query: types.CallbackQuery):
     chat_id = callback_query.message.chat.id
     await bot.send_message(chat_id, of.send_rules())
     # await callback.answer()
+
 
 @dp.callback_query_handler(lambda c: c.data == 'button_get_memes')
 async def send_random_images_handler(callback_query: types.CallbackQuery):
@@ -41,8 +41,6 @@ async def send_random_images_handler(callback_query: types.CallbackQuery):
             await bot.send_photo(callback_query.from_user.id, photo=image_bytes)
     else:
         await bot.send_message(callback_query.from_user.id, text='Все картинки уже были отправлены :(')
-
-
 
 
 if __name__ == '__main__':
