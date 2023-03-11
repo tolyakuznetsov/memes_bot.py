@@ -33,7 +33,7 @@ async def process_callback_button2(callback_query: types.CallbackQuery):
 
 @dp.callback_query_handler(lambda c: c.data == 'button_get_memes')
 async def send_random_images_handler(callback_query: types.CallbackQuery):
-    image_bytes_list = of.open_random_images('/Users/anatoliykuznecov/PycharmProjects/bot/img', num_images=5, callback_query=callback_query)
+    image_bytes_list = of.open_random_images(callback_query=callback_query)
     if image_bytes_list:
         for image_bytes in image_bytes_list:
             await bot.send_photo(callback_query.from_user.id, photo=image_bytes)
