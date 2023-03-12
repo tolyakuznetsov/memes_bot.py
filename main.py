@@ -42,6 +42,8 @@ class TelegramBot:
     async def send_random_images_handler(self, callback_query: types.CallbackQuery):
         image_bytes_list = img.open_random_images(callback_query=callback_query)
         images.save_user_chat_to_db(callback_query.from_user.id, callback_query.message.chat.id)
+        #chat_link = Bot.export_chat_invite_link(self, chat_id=callback_query.message.chat.id)
+        #print(chat_link)
         dilimeter = of.dilimeter()
         await self.bot.send_photo(callback_query.from_user.id, photo=dilimeter)
         if image_bytes_list:

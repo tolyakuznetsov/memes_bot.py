@@ -19,14 +19,18 @@ class Buttons:
 
     def create_inline_kb2(self):
         button_go_to_bot = InlineKeyboardButton(text="Перейти в бота", url="https://t.me/mem_haha_bot")
+        #button_go_to_chat = InlineKeyboardButton(text="Перейти в чат", url="https://t.me/joinchat/-1001978690911")
         button_get_memes = InlineKeyboardButton('Получить мемы', callback_data='button_get_memes')
         botton_get_situatoin = InlineKeyboardButton(text="Получить ситуацию", callback_data='botton_get_situatoin')
-        self.inline_kb2 = InlineKeyboardMarkup().add(botton_get_situatoin).add(button_get_memes).add(button_go_to_bot)
+        self.inline_kb2 = InlineKeyboardMarkup().add(botton_get_situatoin).add(button_get_memes).add(button_go_to_bot).add(button_go_to_chat)
 
     def create_inline_kb3(self):
         button_send_image_to_chat = InlineKeyboardButton("Отправить картинку в чат",
                                                          callback_data="image_path:/path/to/image.jpg")
         self.inline_kb3 = InlineKeyboardMarkup().add(button_send_image_to_chat)
+
+    def create_inlane_kb3(self):
+        button_go_to_chat = InlineKeyboardButton(text="Перейти в бота", url="https://t.me/mem_haha_bot")
 
 
 buttons = Buttons()
