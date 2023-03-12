@@ -14,7 +14,6 @@ async def start_command_handler(message: types.Message):
 
 
 class TelegramBot:
-
     def __init__(self, token):
         self.bot = Bot(token=token)
         self.dp = Dispatcher(self.bot)
@@ -40,17 +39,29 @@ class TelegramBot:
         await self.bot.send_message(chat_id, of.send_rules())
 
     async def send_random_images_handler(self, callback_query: types.CallbackQuery):
+        # Генерация картинок и запись отправленных в БД
         image_bytes_list = img.open_random_images(callback_query=callback_query)
         images.save_user_chat_to_db(callback_query.from_user.id, callback_query.message.chat.id)
-        #chat_link = Bot.export_chat_invite_link(self, chat_id=callback_query.message.chat.id)
-        #print(chat_link)
-        dilimeter = of.dilimeter()
-        await self.bot.send_photo(callback_query.from_user.id, photo=dilimeter)
+
+        # Кнопка возврата в чат
+        chat_link = await self.bot.export_chat_invite_link(chat_id=callback_query.message.chat.id)
+        buttons = kb.Buttons()
+        buttons.create_inline_kb4(chat_link=chat_link)
+        inline_kb4 = buttons.inline_kb4
+
+        # Отправка разделителя
+        await self.bot.send_photo(callback_query.from_user.id, photo=of.dilimeter())
+
+        # Отправка картинок и кнопки возврата в чат
         if image_bytes_list:
             for image_bytes in image_bytes_list:
                 await self.bot.send_photo(callback_query.from_user.id, photo=image_bytes, reply_markup=kb.inline_kb3)
+            await self.bot.send_message(callback_query.from_user.id, text='Нажми кнопку, чтобы вернуться в чат:',
+                                        reply_markup=inline_kb4)
         else:
             await self.bot.send_message(callback_query.from_user.id, text='Все картинки уже были отправлены :(')
+            await self.bot.send_message(callback_query.from_user.id, text='Нажми кнопку, чтобы вернуться в чат:',
+                                        reply_markup=inline_kb4)
 
     async def send_image_to_chat(self, query: types.CallbackQuery):
         file_id = query.message.photo[-1].file_id
@@ -60,11 +71,11 @@ class TelegramBot:
         with requests.get(image_url, stream=True) as r:
             r.raise_for_status()
             with io.BytesIO(r.content) as image:
-                await self.bot.send_photo(chat_id=images.get_mapp_user_chat(query.from_user.id), photo=image, caption='Карточка от ' + query.from_user.full_name)
+                await self.bot.send_photo(chat_id=images.get_mapp_user_chat(query.from_user.id), photo=image,
+                                          caption='Карточка от ' + query.from_user.full_name)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
         await self.bot.send_message(callback_query.message.chat.id, text=of.send_situation())
-
 
 
 if __name__ == '__main__':
