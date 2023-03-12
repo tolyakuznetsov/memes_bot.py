@@ -25,13 +25,13 @@ class TelegramBot:
         self.dp.register_callback_query_handler(self.start_game_handler, lambda c: c.data == 'button_start_game')
         self.dp.register_callback_query_handler(self.rules_handler, lambda c: c.data == 'button_rules')
         self.dp.register_callback_query_handler(self.send_random_images_handler, lambda c: c.data == 'button_get_memes')
+        self.dp.register_callback_query_handler(self.send_situation, lambda c: c.data == 'botton_get_situatoin')
         self.dp.register_callback_query_handler(self.send_image_to_chat,
                                                 lambda query: query.data.startswith('image_path'))
 
     async def start_game_handler(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id
         await self.bot.send_message(chat_id, text='Начинаем! Ситуация:')
-        await self.bot.send_message(chat_id, text=of.send_situation())
         await self.bot.send_message(chat_id, 'Нажми на кнопку ниже, чтобы получить мемы, а потом перейди в бота, '
                                              'чтобы разыграть карты', reply_markup=kb.inline_kb2)
 
@@ -59,6 +59,10 @@ class TelegramBot:
             r.raise_for_status()
             with io.BytesIO(r.content) as image:
                 await self.bot.send_photo(chat_id=images.get_mapp_user_chat(query.from_user.id), photo=image, caption='Карточка от ' + query.from_user.full_name)
+
+    async def send_situation(self, callback_query: types.CallbackQuery):
+        await self.bot.send_message(callback_query.message.chat.id, text=of.send_situation())
+
 
 
 if __name__ == '__main__':
