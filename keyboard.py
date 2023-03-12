@@ -27,6 +27,7 @@ class Buttons:
                                                          callback_data="image_path:/path/to/image.jpg")
         self.inline_kb3 = InlineKeyboardMarkup().add(button_send_image_to_chat)
 
+
 buttons = Buttons()
 inline_kb1 = buttons.inline_kb1
 inline_kb2 = buttons.inline_kb2
