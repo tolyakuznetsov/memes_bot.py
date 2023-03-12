@@ -1,3 +1,4 @@
+import images
 from config_reader import config
 from aiogram import Bot, Dispatcher, executor, types
 import logging
@@ -13,7 +14,6 @@ async def start_command_handler(message: types.Message):
 
 
 class TelegramBot:
-    chat_id = 0
 
     def __init__(self, token):
         self.bot = Bot(token=token)
@@ -41,7 +41,7 @@ class TelegramBot:
 
     async def send_random_images_handler(self, callback_query: types.CallbackQuery):
         image_bytes_list = img.open_random_images(callback_query=callback_query)
-        TelegramBot.chat_id = callback_query.message.chat.id
+        images.save_user_chat_to_db(callback_query.from_user.id, callback_query.message.chat.id)
         if image_bytes_list:
             for image_bytes in image_bytes_list:
                 await self.bot.send_photo(callback_query.from_user.id, photo=image_bytes, reply_markup=kb.inline_kb3)
@@ -56,7 +56,7 @@ class TelegramBot:
         with requests.get(image_url, stream=True) as r:
             r.raise_for_status()
             with io.BytesIO(r.content) as image:
-                await self.bot.send_photo(TelegramBot.chat_id, photo=image, caption='Карточка от ' + query.from_user.full_name)
+                await self.bot.send_photo(chat_id=images.get_mapp_user_chat(query.from_user.id), photo=image, caption='Карточка от ' + query.from_user.full_name)
 
 
 if __name__ == '__main__':

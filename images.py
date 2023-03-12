@@ -53,3 +53,18 @@ def open_random_images(callback_query: types.CallbackQuery):
                 image_bytes_list.append(image_bytes)
             return image_bytes_list
     return None
+
+def save_user_chat_to_db(user_id, chat_id):
+    data_base.cursor.execute("INSERT INTO user_chat (user_id, chat_id) VALUES (?, ?)",
+                             (user_id, chat_id))
+    data_base.conn.commit()
+
+def get_mapp_user_chat(user_id):
+    query = 'select chat_id from user_chat WHERE user_id =? ORDER by id DESC LIMIT 1'
+    data_base.cursor.execute(query, (user_id,))
+    last_record = data_base.cursor.fetchall()
+    sent_image_paths = [i[0] for i in last_record]
+    return sent_image_paths[0]
+
+
+
