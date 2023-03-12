@@ -55,7 +55,14 @@ class TelegramBot:
         # Отправка картинок и кнопки возврата в чат
         if image_bytes_list:
             for image_bytes in image_bytes_list:
-                await self.bot.send_photo(callback_query.from_user.id, photo=image_bytes, reply_markup=kb.inline_kb3)
+                message = await self.bot.send_photo(callback_query.from_user.id, photo=image_bytes,
+                                                    reply_markup=kb.inline_kb3)
+                file_id = message.photo[-1].file_id  # получаем file_id картинки на сервере телеграмма
+                user_id = callback_query.from_user.id
+                chat_id = message.chat.id
+                in_hand = True
+                img.db_save_card_in_hand(user_id, chat_id, file_id, in_hand)
+
             await self.bot.send_message(callback_query.from_user.id, text='Нажми кнопку, чтобы вернуться в чат:',
                                         reply_markup=inline_kb4)
         else:

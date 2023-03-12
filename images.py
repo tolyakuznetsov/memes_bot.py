@@ -66,5 +66,11 @@ def get_mapp_user_chat(user_id):
     sent_image_paths = [i[0] for i in last_record]
     return sent_image_paths[0]
 
+def db_save_card_in_hand(user_id, chat_id, file_id, in_hand):
+    query = 'INSERT INTO card_in_hand (user_id, chat_id, file_id, in_hand) VALUES (?, ?, ?, ?)'
+    values = (user_id, chat_id, file_id, in_hand)
+    data_base.cursor.execute(query, values)
+    data_base.conn.commit()
+
 
 
