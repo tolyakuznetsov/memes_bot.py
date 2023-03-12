@@ -56,7 +56,7 @@ class TelegramBot:
         with requests.get(image_url, stream=True) as r:
             r.raise_for_status()
             with io.BytesIO(r.content) as image:
-                await self.bot.send_photo(TelegramBot.chat_id, photo=image)
+                await self.bot.send_photo(TelegramBot.chat_id, photo=image, caption='Карточка от ' + query.from_user.full_name)
 
 
 if __name__ == '__main__':
