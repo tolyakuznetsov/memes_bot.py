@@ -22,7 +22,7 @@ class Buttons:
         #button_go_to_chat = InlineKeyboardButton(text="Перейти в чат", url="https://t.me/joinchat/-1001978690911")
         button_get_memes = InlineKeyboardButton('Получить мемы', callback_data='button_get_memes')
         botton_get_situatoin = InlineKeyboardButton(text="Получить ситуацию", callback_data='botton_get_situatoin')
-        self.inline_kb2 = InlineKeyboardMarkup().add(botton_get_situatoin).add(button_get_memes).add(button_go_to_bot).add(button_go_to_chat)
+        self.inline_kb2 = InlineKeyboardMarkup().add(botton_get_situatoin).add(button_get_memes).add(button_go_to_bot)#.add(button_go_to_chat)
 
     def create_inline_kb3(self):
         button_send_image_to_chat = InlineKeyboardButton("Отправить картинку в чат",
