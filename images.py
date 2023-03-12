@@ -11,7 +11,7 @@ def get_image_files(path: str):
 
 
 def get_available_images(chat_id: int, user_id: int, available_images: list):
-    query = 'SELECT image_path FROM sent_images WHERE (chat_id =? or user_id =?) and in_hand = True'
+    query = 'SELECT image_path FROM sent_images WHERE (chat_id =? and user_id =?)'
     data_base.cursor.execute(query, (chat_id, user_id,))
     sent_images = data_base.cursor.fetchall()
     sent_image_paths = [img[0] for img in sent_images]
@@ -71,6 +71,13 @@ def db_save_card_in_hand(user_id, chat_id, file_id, in_hand):
     values = (user_id, chat_id, file_id, in_hand)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
+
+def update_in_hand_flag(file_id, user_id, in_hand):
+    query = "UPDATE card_in_hand SET in_hand = ? WHERE file_id = ? AND user_id = ?"
+    values = (in_hand, file_id, user_id)
+    data_base.cursor.execute(query, values)
+    data_base.conn.commit()
+
 
 
 

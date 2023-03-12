@@ -78,14 +78,19 @@ class TelegramBot:
         with requests.get(image_url, stream=True) as r:
             r.raise_for_status()
             with io.BytesIO(r.content) as image:
-                await self.bot.send_photo(chat_id=images.get_mapp_user_chat(query.from_user.id), photo=image,
-                                          caption='Карточка от ' + query.from_user.full_name)
+                chat_id = images.get_mapp_user_chat(query.from_user.id)
+                caption = 'Карточка от ' + query.from_user.full_name
+                await self.bot.send_photo(chat_id=chat_id, photo=image, caption=caption)
+                user_id = query.from_user.id
+                #chat_id = query.message.chat.linked_chat_id
+                in_hand = False
+                img.update_in_hand_flag(file_id, user_id, in_hand)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
         await self.bot.send_message(callback_query.message.chat.id, text=of.send_situation())
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)  # логгирование
+    logging.basicConfig(level=logging.DEBUG)  # логгирование
     bot = TelegramBot(token=config.bot_token.get_secret_value())
     executor.start_polling(bot.dp, skip_updates=True)
