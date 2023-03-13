@@ -11,8 +11,12 @@ def get_image_files(path: str):
 
 
 def get_available_images(chat_id: int, user_id: int, available_images: list):
-    query = 'SELECT image_path FROM sent_images WHERE (chat_id =? and user_id =?)'
-    data_base.cursor.execute(query, (chat_id, user_id,))
+    in_hand = True
+    query = 'SELECT DISTINCT image_path FROM sent_images si \
+             JOIN user_chat_file_id ucfi on (si.user_id = ucfi.user_id and si.chat_id = ucfi.chat_id) \
+             JOIN card_in_hand cih on cih.file_id = ucfi.file_id \
+             WHERE (si.chat_id =? and si.user_id =? and cih.in_hand =?)'
+    data_base.cursor.execute(query, (chat_id, user_id, in_hand))
     sent_images = data_base.cursor.fetchall()
     sent_image_paths = [img[0] for img in sent_images]
     available_images = list(set(available_images) - set(sent_image_paths))
