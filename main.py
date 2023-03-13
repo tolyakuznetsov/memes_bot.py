@@ -41,7 +41,6 @@ class TelegramBot:
     async def send_random_images_handler(self, callback_query: types.CallbackQuery):
         # Генерация картинок и запись отправленных в БД
         image_bytes_list = img.open_random_images(callback_query=callback_query)
-        images.save_user_chat_to_db(callback_query.from_user.id, callback_query.message.chat.id)
 
         # Кнопка возврата в чат
         chat_link = await self.bot.export_chat_invite_link(chat_id=callback_query.message.chat.id)
@@ -59,9 +58,11 @@ class TelegramBot:
                                                     reply_markup=kb.inline_kb3)
                 file_id = message.photo[-1].file_id  # получаем file_id картинки на сервере телеграмма
                 user_id = callback_query.from_user.id
-                chat_id = message.chat.id
+                chat_id = callback_query.message.chat.id
                 in_hand = True
-                img.db_save_card_in_hand(user_id, chat_id, file_id, in_hand)
+                images.save_user_chat_to_db(user_id, chat_id, file_id)
+                img.db_save_card_in_hand(user_id, file_id, in_hand)
+                print(file_id, user_id, chat_id, in_hand)
 
             await self.bot.send_message(callback_query.from_user.id, text='Нажми кнопку, чтобы вернуться в чат:',
                                         reply_markup=inline_kb4)
@@ -70,20 +71,20 @@ class TelegramBot:
             await self.bot.send_message(callback_query.from_user.id, text='Нажми кнопку, чтобы вернуться в чат:',
                                         reply_markup=inline_kb4)
 
-    async def send_image_to_chat(self, query: types.CallbackQuery):
-        file_id = query.message.photo[-1].file_id
+    async def send_image_to_chat(self, callbackQuery: types.CallbackQuery):
+        file_id = callbackQuery.message.photo[-1].file_id
         file_info = await self.bot.get_file(file_id)
         image_url = f'https://api.telegram.org/file/bot{config.bot_token.get_secret_value()}/{file_info.file_path}'
 
         with requests.get(image_url, stream=True) as r:
             r.raise_for_status()
             with io.BytesIO(r.content) as image:
-                chat_id = images.get_mapp_user_chat(query.from_user.id)
-                caption = 'Карточка от ' + query.from_user.full_name
+                chat_id = images.get_mapp_user_chat(callbackQuery.from_user.id)
+                caption = 'Карточка от ' + callbackQuery.from_user.full_name
                 await self.bot.send_photo(chat_id=chat_id, photo=image, caption=caption)
-                user_id = query.from_user.id
-                #chat_id = query.message.chat.linked_chat_id
+                user_id = callbackQuery.from_user.id
                 in_hand = False
+                print(file_id, user_id, in_hand)
                 img.update_in_hand_flag(file_id, user_id, in_hand)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
@@ -91,6 +92,6 @@ class TelegramBot:
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)  # логгирование
+    logging.basicConfig(level=logging.INFO)  # логгирование
     bot = TelegramBot(token=config.bot_token.get_secret_value())
     executor.start_polling(bot.dp, skip_updates=True)

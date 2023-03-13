@@ -54,30 +54,30 @@ def open_random_images(callback_query: types.CallbackQuery):
             return image_bytes_list
     return None
 
-def save_user_chat_to_db(user_id, chat_id):
-    data_base.cursor.execute("INSERT INTO user_chat (user_id, chat_id) VALUES (?, ?)",
-                             (user_id, chat_id))
+
+def save_user_chat_to_db(user_id, chat_id, file_id):
+    data_base.cursor.execute("INSERT INTO user_chat_file_id (user_id, chat_id, file_id) VALUES (?, ?, ?)",
+                             (user_id, chat_id, file_id))
     data_base.conn.commit()
 
+
 def get_mapp_user_chat(user_id):
-    query = 'select chat_id from user_chat WHERE user_id =? ORDER by id DESC LIMIT 1'
+    query = 'select chat_id from user_chat_file_id WHERE user_id =? ORDER by id DESC LIMIT 1'
     data_base.cursor.execute(query, (user_id,))
     last_record = data_base.cursor.fetchall()
     sent_image_paths = [i[0] for i in last_record]
     return sent_image_paths[0]
 
-def db_save_card_in_hand(user_id, chat_id, file_id, in_hand):
-    query = 'INSERT INTO card_in_hand (user_id, chat_id, file_id, in_hand) VALUES (?, ?, ?, ?)'
-    values = (user_id, chat_id, file_id, in_hand)
+
+def db_save_card_in_hand(user_id, file_id, in_hand):
+    query = 'INSERT INTO card_in_hand (user_id, file_id, in_hand) VALUES (?, ?, ?)'
+    values = (user_id, file_id, in_hand)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
+
 
 def update_in_hand_flag(file_id, user_id, in_hand):
     query = "UPDATE card_in_hand SET in_hand = ? WHERE file_id = ? AND user_id = ?"
     values = (in_hand, file_id, user_id)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
-
-
-
-
