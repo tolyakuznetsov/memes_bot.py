@@ -1,5 +1,4 @@
 import random
-import os
 import images
 
 def send_rules():
