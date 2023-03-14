@@ -39,37 +39,44 @@ class TelegramBot:
         await self.bot.send_message(chat_id, of.send_rules())
 
     async def send_random_images_handler(self, callback_query: types.CallbackQuery):
+
         # Генерация картинок и запись отправленных в БД
-        image_bytes_list = img.open_random_images(callback_query=callback_query)
+        count_images = 5
+        path = '/Users/anatoliykuznecov/PycharmProjects/bot/img/'
+        chat_id = callback_query.message.chat.id
+        user_id = callback_query.from_user.id
+        image_list = img.open_random_images(count_images, path, chat_id, user_id)
+        if image_list:
+            for image_bytes, image_path in image_list:
+                # Генерация уникальных uuid для картинок
+                uniq_id = img.generate_uuid()
 
-        # Кнопка возврата в чат
-        chat_link = await self.bot.export_chat_invite_link(chat_id=callback_query.message.chat.id)
-        buttons = kb.Buttons()
-        buttons.create_inline_kb4(chat_link=chat_link)
-        inline_kb4 = buttons.inline_kb4
+                # Добавление картинки в базу данных
+                img.add_image_to_database(uniq_id, user_id, chat_id, image_path, in_hand=True)
 
-        # Отправка разделителя
-        await self.bot.send_photo(callback_query.from_user.id, photo=of.dilimeter())
-
-        # Отправка картинок и кнопки возврата в чат
-        if image_bytes_list:
-            for image_bytes in image_bytes_list:
                 message = await self.bot.send_photo(callback_query.from_user.id, photo=image_bytes,
                                                     reply_markup=kb.inline_kb3)
                 file_id = message.photo[-1].file_id  # получаем file_id картинки на сервере телеграмма
-                user_id = callback_query.from_user.id
-                chat_id = callback_query.message.chat.id
-                in_hand = True
-                images.save_user_chat_to_db(user_id, chat_id, file_id)
-                img.db_save_card_in_hand(user_id, file_id, in_hand)
-                print(file_id, user_id, chat_id, in_hand)
+
+                # Сохранение данных картинки в базу данных
+                img.save_user_chat_to_db(uniq_id, user_id, chat_id, file_id)
+                img.db_save_card_in_hand(uniq_id, user_id, file_id, in_hand=True)
+
+            # Кнопка возврата в чат
+            chat_link = await self.bot.export_chat_invite_link(chat_id=callback_query.message.chat.id)
+            buttons = kb.Buttons()
+            buttons.create_inline_kb4(chat_link=chat_link)
+            inline_kb4 = buttons.inline_kb4
+
+            # Отправка разделителя
+            await self.bot.send_photo(callback_query.from_user.id, photo=of.dilimeter())
 
             await self.bot.send_message(callback_query.from_user.id, text='Нажми кнопку, чтобы вернуться в чат:',
                                         reply_markup=inline_kb4)
         else:
             await self.bot.send_message(callback_query.from_user.id, text='Все картинки уже были отправлены :(')
             await self.bot.send_message(callback_query.from_user.id, text='Нажми кнопку, чтобы вернуться в чат:',
-                                        reply_markup=inline_kb4)
+                                        reply_markup=kb.inline_kb4)
 
     async def send_image_to_chat(self, callbackQuery: types.CallbackQuery):
         file_id = callbackQuery.message.photo[-1].file_id
