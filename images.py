@@ -12,15 +12,24 @@ def get_image_files(path: str):
 
 
 def get_available_images(chat_id: int, user_id: int, available_images: list):
-    in_hand = True
-    query = 'SELECT image_path from sent_images si \
+
+    query_in_hand = 'SELECT image_path from sent_images si \
              JOIN card_in_hand cih on si.uniq_id = cih.uniq_id \
              WHERE (si.chat_id =? and si.user_id =? and cih.in_hand =?)'
-    data_base.cursor.execute(query, (chat_id, user_id, in_hand))
-    sent_images = data_base.cursor.fetchall()
-    sent_image_paths = [img[0] for img in sent_images]
-    available_images = list(set(available_images) - set(sent_image_paths))
-    return sent_image_paths, available_images
+    data_base.cursor.execute(query_in_hand, (chat_id, user_id, True))
+    sent_images_in_hand = data_base.cursor.fetchall()
+
+    query_not_hand = 'SELECT image_path from sent_images si \
+                 JOIN card_in_hand cih on si.uniq_id = cih.uniq_id \
+                 WHERE (si.chat_id =? and si.user_id =? and cih.in_hand =?)'
+    data_base.cursor.execute(query_not_hand, (chat_id, user_id, False))
+    sent_images_not_hand = data_base.cursor.fetchall()
+
+    sent_images_not_hand_paths = set([img[0] for img in sent_images_not_hand])
+
+    sent_image_in_hand_paths = set([img[0] for img in sent_images_in_hand])
+    available_images = list(set(available_images) - set(sent_image_in_hand_paths) - set(sent_images_not_hand_paths))
+    return sent_image_in_hand_paths, available_images
 
 
 def add_image_to_database(uniq_id, user_id: int, chat_id: int, image_path: str, in_hand: bool):
@@ -42,7 +51,7 @@ def open_random_images(chat_id: int, user_id: int) -> List[Tuple[bytes, str]]:
     if image_files:
         available_images = [os.path.join(path, i) for i in image_files]
         available_images = get_available_images(chat_id, user_id, available_images)
-        sent_images = available_images[0]
+        sent_images = list(available_images[0])
         available_images = available_images[1]
         count_sent_images = len(sent_images)
         if count_sent_images < 5:
