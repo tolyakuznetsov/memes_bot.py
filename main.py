@@ -41,11 +41,9 @@ class TelegramBot:
     async def send_random_images_handler(self, callback_query: types.CallbackQuery):
 
         # Генерация картинок и запись отправленных в БД
-        count_images = 5
-        path = '/Users/anatoliykuznecov/PycharmProjects/bot/img/'
         chat_id = callback_query.message.chat.id
         user_id = callback_query.from_user.id
-        image_list = img.open_random_images(count_images, path, chat_id, user_id)
+        image_list = img.open_random_images(chat_id, user_id)
         if image_list:
             for image_bytes, image_path in image_list:
                 # Генерация уникальных uuid для картинок

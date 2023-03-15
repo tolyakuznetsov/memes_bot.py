@@ -20,7 +20,7 @@ def get_available_images(chat_id: int, user_id: int, available_images: list):
     sent_images = data_base.cursor.fetchall()
     sent_image_paths = [img[0] for img in sent_images]
     available_images = list(set(available_images) - set(sent_image_paths))
-    return available_images
+    return sent_image_paths, available_images
 
 
 def add_image_to_database(uniq_id, user_id: int, chat_id: int, image_path: str, in_hand: bool):
@@ -36,11 +36,32 @@ def read_image_bytes(image_path: str):
     return image_bytes
 
 
-def open_random_images(count_images: int, path: str, chat_id: int, user_id: int) -> List[Tuple[bytes, str]]:
+def open_random_images(chat_id: int, user_id: int) -> List[Tuple[bytes, str]]:
+    path = '/Users/anatoliykuznecov/PycharmProjects/bot/img'
     image_files = get_image_files(path)
     if image_files:
         available_images = [os.path.join(path, i) for i in image_files]
         available_images = get_available_images(chat_id, user_id, available_images)
+        sent_images = available_images[0]
+        available_images = available_images[1]
+        count_sent_images = len(sent_images)
+        if count_sent_images < 5:
+            count = 5 - count_sent_images
+            random_images = random.sample(available_images, count)
+            list_images_to_send = sent_images + random_images
+            image_list = []
+            for random_image in list_images_to_send:
+                image_path = random_image
+                image_bytes = read_image_bytes(image_path)
+                image_list.append((image_bytes, image_path))
+            return image_list
+        return []
+    elif image_files == 5:
+        return []
+
+
+'''       
+        available_images = available_images[1]
         num_available_images = len(available_images)
         if num_available_images > 0:
             count_images = min(count_images, num_available_images)
@@ -52,6 +73,7 @@ def open_random_images(count_images: int, path: str, chat_id: int, user_id: int)
                 image_list.append((image_bytes, image_path))
             return image_list
     return []
+'''
 
 
 def generate_uuid():
