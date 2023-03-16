@@ -54,16 +54,20 @@ def open_random_images(chat_id: int, user_id: int) -> List[Tuple[bytes, str]]:
         sent_images = list(available_images[0])
         available_images = available_images[1]
         count_sent_images = len(sent_images)
+        count_available_images = len(available_images)
         if count_sent_images < 5:
             count = 5 - count_sent_images
-            random_images = random.sample(available_images, count)
-            list_images_to_send = sent_images + random_images
-            image_list = []
-            for random_image in list_images_to_send:
-                image_path = random_image
-                image_bytes = read_image_bytes(image_path)
-                image_list.append((image_bytes, image_path))
-            return image_list
+            if count_available_images + count_sent_images < 5:
+                return []
+            else:
+                random_images = random.sample(available_images, count)
+                list_images_to_send = sent_images + random_images
+                image_list = []
+                for random_image in list_images_to_send:
+                    image_path = random_image
+                    image_bytes = read_image_bytes(image_path)
+                    image_list.append((image_bytes, image_path))
+                return image_list
         return []
     elif image_files == 5:
         return []
