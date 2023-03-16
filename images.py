@@ -12,7 +12,6 @@ def get_image_files(path: str):
 
 
 def get_available_images(chat_id: int, user_id: int, available_images: list):
-
     query_in_hand = 'SELECT image_path from sent_images si \
              JOIN card_in_hand cih on si.uniq_id = cih.uniq_id \
              WHERE (si.chat_id =? and si.user_id =? and cih.in_hand =?)'
@@ -73,22 +72,6 @@ def open_random_images(chat_id: int, user_id: int) -> List[Tuple[bytes, str]]:
         return []
 
 
-'''       
-        available_images = available_images[1]
-        num_available_images = len(available_images)
-        if num_available_images > 0:
-            count_images = min(count_images, num_available_images)
-            random_images = random.sample(available_images, count_images)
-            image_list = []
-            for random_image in random_images:
-                image_path = random_image
-                image_bytes = read_image_bytes(image_path)
-                image_list.append((image_bytes, image_path))
-            return image_list
-    return []
-'''
-
-
 def generate_uuid():
     return str(uuid.uuid4())
 
@@ -119,3 +102,24 @@ def update_in_hand_flag(file_id, user_id, in_hand):
     values = (in_hand, file_id, user_id)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
+
+
+def delete_images_from_db(user_id, chat_id):
+    query_sent_images = 'DELETE FROM sent_images ' \
+                        'WHERE chat_id = ?'
+    values_sent_images = (chat_id,)
+    data_base.cursor.execute(query_sent_images, values_sent_images)
+    data_base.conn.commit()
+
+    query_card_in_hand = 'DELETE FROM card_in_hand ' \
+                         'WHERE user_id = ?'
+    values_card_in_hand = (user_id, )
+    data_base.cursor.execute(query_card_in_hand, values_card_in_hand)
+    data_base.conn.commit()
+
+    query_card_in_hand = 'DELETE FROM user_chat_file_id ' \
+                         'WHERE user_id = ? and chat_id = ?'
+    values_user_chat_file_id = (user_id, chat_id)
+    data_base.cursor.execute(query_card_in_hand, values_user_chat_file_id)
+    data_base.conn.commit()
+    return 'Игра закончена'

@@ -27,12 +27,14 @@ class TelegramBot:
         self.dp.register_callback_query_handler(self.send_situation, lambda c: c.data == 'botton_get_situatoin')
         self.dp.register_callback_query_handler(self.send_image_to_chat,
                                                 lambda query: query.data.startswith('image_path'))
+        self.dp.register_callback_query_handler(self.delete_images_from_db, lambda c: c.data == 'button_clean_db')
 
     async def start_game_handler(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id
         await self.bot.send_message(chat_id, text='Начинаем! Ситуация:')
         await self.bot.send_message(chat_id, 'Нажми на кнопку ниже, чтобы получить мемы, а потом перейди в бота, '
                                              'чтобы разыграть карты', reply_markup=kb.inline_kb2)
+        await self.bot.send_message(chat_id, 'Закончить игру', reply_markup=kb.inline_kb5)
 
     async def rules_handler(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id
@@ -94,6 +96,10 @@ class TelegramBot:
 
     async def send_situation(self, callback_query: types.CallbackQuery):
         await self.bot.send_message(callback_query.message.chat.id, text=of.send_situation())
+
+    async def delete_images_from_db(self, callback_query: types.CallbackQuery):
+        deleted = img.delete_images_from_db(callback_query.from_user.id, callback_query.message.chat.id)
+        await self.bot.send_message(callback_query.message.chat.id, text=deleted)
 
 
 if __name__ == '__main__':
