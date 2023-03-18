@@ -82,17 +82,21 @@ class TelegramBot:
         file_id = callbackQuery.message.photo[-1].file_id
         file_info = await self.bot.get_file(file_id)
         image_url = f'https://api.telegram.org/file/bot{config.bot_token.get_secret_value()}/{file_info.file_path}'
-
-        with requests.get(image_url, stream=True) as r:
-            r.raise_for_status()
-            with io.BytesIO(r.content) as image:
-                chat_id = images.get_mapp_user_chat(callbackQuery.from_user.id)
-                caption = 'Карточка от ' + callbackQuery.from_user.full_name
-                await self.bot.send_photo(chat_id=chat_id, photo=image, caption=caption)
-                user_id = callbackQuery.from_user.id
-                in_hand = False
-                print(file_id, user_id, in_hand)
-                img.update_in_hand_flag(file_id, user_id, in_hand)
+        was_sent = img.check_image_in_db(file_id)
+        if was_sent:
+            await self.bot.send_message(callbackQuery.from_user.id, text='Эта карта уже была отправлена')
+        else:
+            with requests.get(image_url, stream=True) as r:
+                r.raise_for_status()
+                with io.BytesIO(r.content) as image:
+                    chat_id = images.get_mapp_user_chat(callbackQuery.from_user.id)
+                    caption = 'Карточка от ' + callbackQuery.from_user.full_name
+                    await self.bot.send_photo(chat_id=chat_id, photo=image, caption=caption)
+                    user_id = callbackQuery.from_user.id
+                    in_hand = False
+                    print(file_id, user_id, in_hand)
+                    img.update_in_hand_flag(file_id, user_id, in_hand)
+                    img.db_insert_user_sent_card(user_id, file_id)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
         await self.bot.send_message(callback_query.message.chat.id, text=of.send_situation())

@@ -123,3 +123,21 @@ def delete_images_from_db(user_id, chat_id):
     data_base.cursor.execute(query_card_in_hand, values_user_chat_file_id)
     data_base.conn.commit()
     return 'Игра закончена'
+
+def check_image_in_db(file_id):
+    query = 'SELECT file_id from user_sent_card ' \
+            'WHERE file_id =?'
+    values = (file_id,)
+    data_base.cursor.execute(query, values)
+    images = data_base.cursor.fetchall()
+    if images:
+        return True
+    elif not images:
+        return False
+
+
+def db_insert_user_sent_card(user_id, file_id):
+    query = 'INSERT INTO user_sent_card (user_id, file_id) VALUES (?, ?)'
+    values = (user_id, file_id)
+    data_base.cursor.execute(query, values)
+    data_base.conn.commit()
