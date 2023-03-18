@@ -46,6 +46,7 @@ class TelegramBot:
         chat_id = callback_query.message.chat.id
         user_id = callback_query.from_user.id
         image_list = img.open_random_images(chat_id, user_id)
+        img.db_delete_sent_cards_in_turn(user_id, chat_id)
         if image_list:
             for image_bytes, image_path in image_list:
                 # Генерация уникальных uuid для картинок
@@ -61,6 +62,7 @@ class TelegramBot:
                 # Сохранение данных картинки в базу данных
                 img.save_user_chat_to_db(uniq_id, user_id, chat_id, file_id)
                 img.db_save_card_in_hand(uniq_id, user_id, file_id, in_hand=True)
+                img.db_insert_user_done_turn(user_id, chat_id, sent_card=True)
 
             # Кнопка возврата в чат
             chat_link = await self.bot.export_chat_invite_link(chat_id=callback_query.message.chat.id)
@@ -80,23 +82,26 @@ class TelegramBot:
 
     async def send_image_to_chat(self, callbackQuery: types.CallbackQuery):
         file_id = callbackQuery.message.photo[-1].file_id
+        chat_id = images.get_mapp_user_chat(callbackQuery.from_user.id)
         file_info = await self.bot.get_file(file_id)
+        user_id = callbackQuery.from_user.id
         image_url = f'https://api.telegram.org/file/bot{config.bot_token.get_secret_value()}/{file_info.file_path}'
-        was_sent = img.check_image_in_db(file_id)
-        if was_sent:
+        was_sent_img = img.check_image_in_db(file_id)
+        was_sent_imgs = img.user_sent_cards_in_turn(user_id, chat_id, sent_card=False)
+        if was_sent_img:
             await self.bot.send_message(callbackQuery.from_user.id, text='Эта карта уже была отправлена')
+        elif was_sent_imgs:
+            await self.bot.send_message(callbackQuery.from_user.id, text='Ты уже отправлял карты в этот ход')
         else:
             with requests.get(image_url, stream=True) as r:
                 r.raise_for_status()
                 with io.BytesIO(r.content) as image:
-                    chat_id = images.get_mapp_user_chat(callbackQuery.from_user.id)
                     caption = 'Карточка от ' + callbackQuery.from_user.full_name
                     await self.bot.send_photo(chat_id=chat_id, photo=image, caption=caption)
-                    user_id = callbackQuery.from_user.id
                     in_hand = False
-                    print(file_id, user_id, in_hand)
                     img.update_in_hand_flag(file_id, user_id, in_hand)
                     img.db_insert_user_sent_card(user_id, file_id)
+                    img.db_update_user_done_turn(user_id, chat_id, sent_card=False)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
         await self.bot.send_message(callback_query.message.chat.id, text=of.send_situation())

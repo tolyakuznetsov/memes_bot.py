@@ -113,7 +113,7 @@ def delete_images_from_db(user_id, chat_id):
 
     query_card_in_hand = 'DELETE FROM card_in_hand ' \
                          'WHERE user_id = ?'
-    values_card_in_hand = (user_id, )
+    values_card_in_hand = (user_id,)
     data_base.cursor.execute(query_card_in_hand, values_card_in_hand)
     data_base.conn.commit()
 
@@ -123,6 +123,7 @@ def delete_images_from_db(user_id, chat_id):
     data_base.cursor.execute(query_card_in_hand, values_user_chat_file_id)
     data_base.conn.commit()
     return 'Игра закончена'
+
 
 def check_image_in_db(file_id):
     query = 'SELECT file_id from user_sent_card ' \
@@ -140,4 +141,38 @@ def db_insert_user_sent_card(user_id, file_id):
     query = 'INSERT INTO user_sent_card (user_id, file_id) VALUES (?, ?)'
     values = (user_id, file_id)
     data_base.cursor.execute(query, values)
+    data_base.conn.commit()
+
+
+def db_insert_user_done_turn(user_id, chat_id, sent_card):
+    query = 'INSERT INTO user_sent_cards (user_id, chat_id, sent_card) VALUES (?, ?, ?)'
+    values = (user_id, chat_id, sent_card)
+    data_base.cursor.execute(query, values)
+    data_base.conn.commit()
+
+
+def db_update_user_done_turn(user_id, chat_id, sent_card):
+    query = "UPDATE user_sent_cards SET sent_card = ? WHERE user_id = ? AND chat_id = ?"
+    values = (sent_card, user_id, chat_id)
+    data_base.cursor.execute(query, values)
+    data_base.conn.commit()
+
+
+def user_sent_cards_in_turn(user_id, chat_id, sent_card):
+    query = 'SELECT user_id from user_sent_cards ' \
+            'WHERE user_id =? and chat_id =? and sent_card=?'
+    values = (user_id, chat_id, sent_card)
+    data_base.cursor.execute(query, values)
+    images = data_base.cursor.fetchall()
+    if images:
+        return True
+    elif not images:
+        return False
+
+
+def db_delete_sent_cards_in_turn(user_id, chat_id):
+    query_sent_images = 'DELETE FROM user_sent_cards ' \
+                        'WHERE user_id = ? and chat_id =?'
+    values_sent_images = (user_id, chat_id)
+    data_base.cursor.execute(query_sent_images, values_sent_images)
     data_base.conn.commit()
