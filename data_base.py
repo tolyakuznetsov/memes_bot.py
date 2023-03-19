@@ -16,5 +16,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS user_sent_card
                   (id INTEGER, user_id TEXT, file_id TEXT, PRIMARY KEY (id))''')
 cursor.execute('''CREATE TABLE IF NOT EXISTS user_sent_cards
                   (id INTEGER, user_id TEXT, chat_id TEXT, sent_card BOOLEAN, PRIMARY KEY (id))''')
+cursor.execute('''CREATE TABLE IF NOT EXISTS sent_situation
+                  (id INTEGER, chat_id TEXT, situation TEXT, PRIMARY KEY (id))''')
 
 conn.commit()

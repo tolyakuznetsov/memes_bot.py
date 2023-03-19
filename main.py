@@ -18,6 +18,13 @@ async def start_command_handler(message: types.Message):
         await message.reply(of.send_welcome_text(), reply_markup=kb.inline_kb1)
 
 
+async def end_command_handler(message: types.Message):
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    deleted = img.delete_images_from_db(user_id, chat_id)
+    await message.reply(deleted)
+
+
 class TelegramBot:
     def __init__(self, token):
         self.bot = Bot(token=token)
@@ -26,13 +33,13 @@ class TelegramBot:
 
     def setup_handlers(self):
         self.dp.register_message_handler(start_command_handler, commands=['start'])
+        self.dp.register_message_handler(end_command_handler, commands=['end'])
         self.dp.register_callback_query_handler(self.start_game_handler, lambda c: c.data == 'button_start_game')
         self.dp.register_callback_query_handler(self.rules_handler, lambda c: c.data == 'button_rules')
         self.dp.register_callback_query_handler(self.send_random_images_handler, lambda c: c.data == 'button_get_memes')
         self.dp.register_callback_query_handler(self.send_situation, lambda c: c.data == 'botton_get_situatoin')
         self.dp.register_callback_query_handler(self.send_image_to_chat,
                                                 lambda query: query.data.startswith('image_path'))
-        self.dp.register_callback_query_handler(self.delete_images_from_db, lambda c: c.data == 'button_clean_db')
         self.dp.register_callback_query_handler(self.send_description, lambda c: c.data == 'button_description')
 
     async def start_game_handler(self, callback_query: types.CallbackQuery):
@@ -40,7 +47,6 @@ class TelegramBot:
         await self.bot.send_message(chat_id, text='Начинаем! Ситуация:')
         await self.bot.send_message(chat_id, 'Нажми на кнопку ниже, чтобы получить мемы, а потом перейди в бота, '
                                              'чтобы разыграть карты', reply_markup=kb.inline_kb2)
-        await self.bot.send_message(chat_id, 'Закончить игру', reply_markup=kb.inline_kb5)
 
     async def send_description(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id
@@ -114,11 +120,10 @@ class TelegramBot:
                     img.db_update_user_done_turn(user_id, chat_id, sent_card=False)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
-        await self.bot.send_message(callback_query.message.chat.id, text=of.send_situation())
-
-    async def delete_images_from_db(self, callback_query: types.CallbackQuery):
-        deleted = img.delete_images_from_db(callback_query.from_user.id, callback_query.message.chat.id)
-        await self.bot.send_message(callback_query.message.chat.id, text=deleted)
+        chat_id = callback_query.message.chat.id
+        sit = of.send_situation(chat_id)
+        img.db_insert_situation(chat_id, sit)
+        await self.bot.send_message(chat_id, text=sit)
 
 
 if __name__ == '__main__':

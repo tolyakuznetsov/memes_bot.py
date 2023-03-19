@@ -176,3 +176,10 @@ def db_delete_sent_cards_in_turn(user_id, chat_id):
     values_sent_images = (user_id, chat_id)
     data_base.cursor.execute(query_sent_images, values_sent_images)
     data_base.conn.commit()
+
+
+def db_insert_situation(chat_id, situation):
+    query = 'INSERT INTO sent_situation (chat_id, situation) VALUES (?, ?)'
+    values = (chat_id, situation)
+    data_base.cursor.execute(query, values)
+    data_base.conn.commit()
