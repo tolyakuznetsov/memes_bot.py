@@ -10,7 +10,12 @@ import io
 
 
 async def start_command_handler(message: types.Message):
-    await message.reply(of.send_welcome_text(), reply_markup=kb.inline_kb1)
+    chat_id = message.chat.id
+    if chat_id == 274921311:
+        await message.reply('Привет! Я бот для игры в ..., добавь меня в чат, чтобы начать игру',
+                            reply_markup=kb.inline_kb6)
+    else:
+        await message.reply(of.send_welcome_text(), reply_markup=kb.inline_kb1)
 
 
 class TelegramBot:
@@ -28,6 +33,7 @@ class TelegramBot:
         self.dp.register_callback_query_handler(self.send_image_to_chat,
                                                 lambda query: query.data.startswith('image_path'))
         self.dp.register_callback_query_handler(self.delete_images_from_db, lambda c: c.data == 'button_clean_db')
+        self.dp.register_callback_query_handler(self.send_description, lambda c: c.data == 'button_description')
 
     async def start_game_handler(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id
@@ -35,6 +41,10 @@ class TelegramBot:
         await self.bot.send_message(chat_id, 'Нажми на кнопку ниже, чтобы получить мемы, а потом перейди в бота, '
                                              'чтобы разыграть карты', reply_markup=kb.inline_kb2)
         await self.bot.send_message(chat_id, 'Закончить игру', reply_markup=kb.inline_kb5)
+
+    async def send_description(self, callback_query: types.CallbackQuery):
+        chat_id = callback_query.message.chat.id
+        await self.bot.send_message(chat_id, of.send_description())
 
     async def rules_handler(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id

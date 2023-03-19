@@ -11,11 +11,13 @@ class Buttons:
         self.inline_kb3 = None
         self.inline_kb4 = None
         self.inline_kb5 = None
+        self.inline_kb6 = None
 
         self.create_inline_kb1()
         self.create_inline_kb2()
         self.create_inline_kb3()
         self.create_inline_kb5()
+        self.create_inline_kb6()
 
     def create_inline_kb1(self):
         button_start_game = InlineKeyboardButton('Начать игру', callback_data='button_start_game')
@@ -41,6 +43,10 @@ class Buttons:
         button_clean_db = InlineKeyboardButton(text="Закончить игру", callback_data='button_clean_db')
         self.inline_kb5 = InlineKeyboardMarkup().add(button_clean_db)
 
+    def create_inline_kb6(self):
+        button_description = InlineKeyboardButton(text="Описание", callback_data='button_description')
+        self.inline_kb6 = InlineKeyboardMarkup().add(button_description)
+
 
 buttons = Buttons()
 inline_kb1 = buttons.inline_kb1
@@ -48,3 +54,4 @@ inline_kb2 = buttons.inline_kb2
 inline_kb3 = buttons.inline_kb3
 inline_kb4 = buttons.inline_kb4
 inline_kb5 = buttons.inline_kb5
+inline_kb6 = buttons.inline_kb6

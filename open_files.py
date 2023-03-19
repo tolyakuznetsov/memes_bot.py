@@ -23,3 +23,8 @@ def dilimeter():
     path = '/Users/anatoliykuznecov/PycharmProjects/bot/img/delimiter/1.png'
     file = images.read_image_bytes(path)
     return file
+
+def send_description():
+    with open("/Users/anatoliykuznecov/PycharmProjects/bot/text_files/description.txt", "r", encoding="utf-8") as file:
+        text = file.read()
+    return text
