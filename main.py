@@ -7,6 +7,7 @@ import open_files as of
 import images as img
 import requests
 import io
+import asyncio
 
 
 async def start_command_handler(message: types.Message):
@@ -120,11 +121,34 @@ class TelegramBot:
                     img.db_update_user_done_turn(user_id, chat_id, sent_card=False)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
+        #poll = types.Poll(question='Какой язык программирования вы предпочитаете?', options=['Python', 'Java', 'C++'])
         chat_id = callback_query.message.chat.id
         sit = of.send_situation(chat_id)
         img.db_insert_situation(chat_id, sit)
         await self.bot.send_message(chat_id, text=sit)
 
+        # Отправляем сообщение о том, что пользователю дается 30 секунд на выбор карты
+        message_30_sec = await self.bot.send_message(chat_id, text='У вас 30 секунд на отправку карт в чат!')
+
+        # Ждем 20 секунд и отправляем сообщение о том, что осталось 10 секунд
+        await asyncio.sleep(20)
+        message_10_sec = await self.bot.send_message(chat_id, text='Осталось 10 секунд!')
+
+        # Ждем еще 10 секунд и отправляем опрос
+        await asyncio.sleep(10)
+        poll = types.Poll(
+            question='Кто победил?',
+            options=['Игрок 1', 'Игрок 2', 'Игрок 3'],
+            is_anonymous=False
+        )
+        await self.bot.send_poll(chat_id=chat_id,
+                                 question='Кто победил?',
+                                 options=['Игрок 1', 'Игрок 2', 'Игрок 3'],
+                                 is_anonymous=False)
+
+        # Удаляем сообщения о таймере
+        await self.bot.delete_message(chat_id, message_30_sec.message_id)
+        await self.bot.delete_message(chat_id, message_10_sec.message_id)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)  # логгирование

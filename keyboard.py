@@ -6,6 +6,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 class Buttons:
     def __init__(self):
+        self.inline_kb_count_users = None
         self.inline_kb1 = None
         self.inline_kb2 = None
         self.inline_kb3 = None
@@ -18,11 +19,21 @@ class Buttons:
         self.create_inline_kb3()
         self.create_inline_kb5()
         self.create_inline_kb6()
+        self.create_inline_kb_count_users()
 
     def create_inline_kb1(self):
         button_start_game = InlineKeyboardButton('Начать игру', callback_data='button_start_game')
         button_rules = InlineKeyboardButton('Ознакомиться с правилами', callback_data='button_rules')
         self.inline_kb1 = InlineKeyboardMarkup().add(button_start_game).add(button_rules)
+
+    def create_inline_kb_count_users(self):
+        button_count_users = InlineKeyboardButton('Укажите количество игроков', callback_data='button_count_users')
+        self.inline_kb_count_users = InlineKeyboardMarkup().add(button_count_users)
+
+    def create_inline_kb_pick_hero(self):
+        button_to_game = InlineKeyboardButton('Выбрать персонажа', callback_data='button_nicknames')
+        button_nicknames = InlineKeyboardButton('Выбрать персонажа', callback_data='button_nicknames')
+        self.inline_kb_count_users = InlineKeyboardMarkup().add(button_nicknames).add(button_to_game)
 
     def create_inline_kb2(self):
         button_go_to_bot = InlineKeyboardButton(text="Перейти в бота", url="https://t.me/mem_haha_bot")
@@ -46,6 +57,9 @@ class Buttons:
     def create_inline_kb6(self):
         button_description = InlineKeyboardButton(text="Описание", callback_data='button_description')
         self.inline_kb6 = InlineKeyboardMarkup().add(button_description)
+
+    def create_inline_kb_pers(self):
+        pass
 
 
 buttons = Buttons()
