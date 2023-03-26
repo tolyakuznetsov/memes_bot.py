@@ -52,16 +52,17 @@ class TelegramBot:
     async def start_game_handler(self, callback_query: types.CallbackQuery):
         await states.UsersStates.wait_response.set()
         chat_id = callback_query.message.chat.id
-        await self.bot.send_message(chat_id, "How many players?")
-        print(await states.UsersStates.wait_response.set())
+        await self.bot.edit_message_reply_markup(chat_id=callback_query.message.chat.id,
+                                            message_id=callback_query.message.message_id, reply_markup=None)
+        await self.bot.send_message(chat_id, text=f'{callback_query.from_user.full_name}, '
+                                                  f'сколько игроков будет участвовать?')
 
     async def player_count_handler(self, message: types.Message, state: FSMContext):
         try:
             player_count = int(message.text)
-            print(f"Player count: {player_count}")
-            await message.answer(f"Got it! {player_count} players")
+            await message.answer(f'{player_count} игроков, отлично! Начинаем!')
         except (ValueError, TypeError):
-            await message.answer("Invalid input, please enter a valid number")
+            await message.answer("Пожалуйста, укажи число игроков")
             return
 
         await state.finish()
