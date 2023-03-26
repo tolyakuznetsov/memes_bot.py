@@ -69,3 +69,4 @@ inline_kb3 = buttons.inline_kb3
 inline_kb4 = buttons.inline_kb4
 inline_kb5 = buttons.inline_kb5
 inline_kb6 = buttons.inline_kb6
+inline_kb_count_users = buttons.inline_kb_count_users

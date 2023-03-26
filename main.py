@@ -1,40 +1,32 @@
-import images
-from config_reader import config
-from aiogram import Bot, Dispatcher, executor, types
+import asyncio
+import io
 import logging
+import requests
+
+from aiogram import Bot, Dispatcher, executor, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.dispatcher import FSMContext
+
+import images
+import images as img
 import keyboard as kb
 import open_files as of
-import images as img
-import requests
-import io
-import asyncio
-
-
-async def start_command_handler(message: types.Message):
-    chat_id = message.chat.id
-    if chat_id == 274921311:
-        await message.reply('Привет! Я бот для игры в ..., добавь меня в чат, чтобы начать игру',
-                            reply_markup=kb.inline_kb6)
-    else:
-        await message.reply(of.send_welcome_text(), reply_markup=kb.inline_kb1)
-
-
-async def end_command_handler(message: types.Message):
-    user_id = message.from_user.id
-    chat_id = message.chat.id
-    deleted = img.delete_images_from_db(user_id, chat_id)
-    await message.reply(deleted)
+from config_reader import config
+import states
 
 
 class TelegramBot:
     def __init__(self, token):
         self.bot = Bot(token=token)
-        self.dp = Dispatcher(self.bot)
+        self.dp = Dispatcher(self.bot, storage=MemoryStorage())
         self.setup_handlers()
+        self.dp.middleware.setup(LoggingMiddleware())
 
     def setup_handlers(self):
-        self.dp.register_message_handler(start_command_handler, commands=['start'])
-        self.dp.register_message_handler(end_command_handler, commands=['end'])
+        self.dp.register_message_handler(self.player_count_handler, state=states.UsersStates.wait_response)
+        self.dp.register_message_handler(self.start_command_handler, commands=['start'])
+        self.dp.register_message_handler(self.end_command_handler, commands=['end'])
         self.dp.register_callback_query_handler(self.start_game_handler, lambda c: c.data == 'button_start_game')
         self.dp.register_callback_query_handler(self.rules_handler, lambda c: c.data == 'button_rules')
         self.dp.register_callback_query_handler(self.send_random_images_handler, lambda c: c.data == 'button_get_memes')
@@ -43,11 +35,36 @@ class TelegramBot:
                                                 lambda query: query.data.startswith('image_path'))
         self.dp.register_callback_query_handler(self.send_description, lambda c: c.data == 'button_description')
 
+    async def start_command_handler(self, message: types.Message):
+        chat_id = message.chat.id
+        if chat_id == 274921311:
+            await message.reply('Привет! Я бот для игры в ..., добавь меня в чат, чтобы начать игру',
+                                reply_markup=kb.inline_kb1)
+        else:
+            await message.reply(of.send_welcome_text(), reply_markup=kb.inline_kb1)
+
+    async def end_command_handler(self, message: types.Message):
+        user_id = message.from_user.id
+        chat_id = message.chat.id
+        deleted = img.delete_images_from_db(user_id, chat_id)
+        await message.reply(deleted)
+
     async def start_game_handler(self, callback_query: types.CallbackQuery):
+        await states.UsersStates.wait_response.set()
         chat_id = callback_query.message.chat.id
-        await self.bot.send_message(chat_id, text='Начинаем! Ситуация:')
-        await self.bot.send_message(chat_id, 'Нажми на кнопку ниже, чтобы получить мемы, а потом перейди в бота, '
-                                             'чтобы разыграть карты', reply_markup=kb.inline_kb2)
+        await self.bot.send_message(chat_id, "How many players?")
+        print(await states.UsersStates.wait_response.set())
+
+    async def player_count_handler(self, message: types.Message, state: FSMContext):
+        try:
+            player_count = int(message.text)
+            print(f"Player count: {player_count}")
+            await message.answer(f"Got it! {player_count} players")
+        except (ValueError, TypeError):
+            await message.answer("Invalid input, please enter a valid number")
+            return
+
+        await state.finish()
 
     async def send_description(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id
@@ -121,7 +138,7 @@ class TelegramBot:
                     img.db_update_user_done_turn(user_id, chat_id, sent_card=False)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
-        #poll = types.Poll(question='Какой язык программирования вы предпочитаете?', options=['Python', 'Java', 'C++'])
+        # poll = types.Poll(question='Какой язык программирования вы предпочитаете?', options=['Python', 'Java', 'C++'])
         chat_id = callback_query.message.chat.id
         sit = of.send_situation(chat_id)
         img.db_insert_situation(chat_id, sit)
@@ -149,6 +166,7 @@ class TelegramBot:
         # Удаляем сообщения о таймере
         await self.bot.delete_message(chat_id, message_30_sec.message_id)
         await self.bot.delete_message(chat_id, message_10_sec.message_id)
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)  # логгирование
