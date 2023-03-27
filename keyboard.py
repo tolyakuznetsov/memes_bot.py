@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import random
 
 
 # ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton,
@@ -13,6 +14,7 @@ class Buttons:
         self.inline_kb4 = None
         self.inline_kb5 = None
         self.inline_kb6 = None
+        self.inline_kb_pers = None
 
         self.create_inline_kb1()
         self.create_inline_kb2()
@@ -58,8 +60,21 @@ class Buttons:
         button_description = InlineKeyboardButton(text="Описание", callback_data='button_description')
         self.inline_kb6 = InlineKeyboardMarkup().add(button_description)
 
-    def create_inline_kb_pers(self):
-        pass
+    @staticmethod
+    def create_inline_kb_pers(num_buttons):
+        # Открываем файл pers.txt и считываем содержимое
+        with open('/Users/anatoliykuznecov/PycharmProjects/bot/text_files/pers.txt', 'r') as f:
+            texts = [line.strip() for line in f.readlines()]
+
+        # Случайным образом выбираем num_buttons текстов из файла
+        button_texts = random.sample(texts, num_buttons)
+
+        # Создаем клавиатуру с выбранными текстами кнопок
+        inline_kb_pers = InlineKeyboardMarkup(resize_keyboard=True)
+        for text in button_texts:
+            inline_kb_pers.add(InlineKeyboardButton(text=text, callback_data=text))
+
+        return inline_kb_pers
 
 
 buttons = Buttons()
@@ -69,4 +84,3 @@ inline_kb3 = buttons.inline_kb3
 inline_kb4 = buttons.inline_kb4
 inline_kb5 = buttons.inline_kb5
 inline_kb6 = buttons.inline_kb6
-inline_kb_count_users = buttons.inline_kb_count_users

@@ -24,9 +24,9 @@ class TelegramBot:
         self.dp.middleware.setup(LoggingMiddleware())
 
     def setup_handlers(self):
+        self.dp.register_message_handler(self.end_command_handler, commands=['end'], state='*')
         self.dp.register_message_handler(self.player_count_handler, state=states.UsersStates.wait_response)
         self.dp.register_message_handler(self.start_command_handler, commands=['start'])
-        self.dp.register_message_handler(self.end_command_handler, commands=['end'])
         self.dp.register_callback_query_handler(self.start_game_handler, lambda c: c.data == 'button_start_game')
         self.dp.register_callback_query_handler(self.rules_handler, lambda c: c.data == 'button_rules')
         self.dp.register_callback_query_handler(self.send_random_images_handler, lambda c: c.data == 'button_get_memes')
@@ -35,35 +35,43 @@ class TelegramBot:
                                                 lambda query: query.data.startswith('image_path'))
         self.dp.register_callback_query_handler(self.send_description, lambda c: c.data == 'button_description')
 
-    async def start_command_handler(self, message: types.Message):
+    @staticmethod
+    async def start_command_handler(message: types.Message):
         chat_id = message.chat.id
         if chat_id == 274921311:
             await message.reply('Привет! Я бот для игры в ..., добавь меня в чат, чтобы начать игру',
-                                reply_markup=kb.inline_kb1)
+                                reply_markup=kb.inline_kb6)
         else:
             await message.reply(of.send_welcome_text(), reply_markup=kb.inline_kb1)
 
-    async def end_command_handler(self, message: types.Message):
+    @staticmethod
+    async def end_command_handler(message: types.Message, state: FSMContext):
         user_id = message.from_user.id
         chat_id = message.chat.id
         deleted = img.delete_images_from_db(user_id, chat_id)
         await message.reply(deleted)
+        await state.finish()
 
     async def start_game_handler(self, callback_query: types.CallbackQuery):
-        await states.UsersStates.wait_response.set()
         chat_id = callback_query.message.chat.id
-        await self.bot.edit_message_reply_markup(chat_id=callback_query.message.chat.id,
-                                            message_id=callback_query.message.message_id, reply_markup=None)
-        await self.bot.send_message(chat_id, text=f'{callback_query.from_user.full_name}, '
-                                                  f'сколько игроков будет участвовать?')
+        user_full_name = callback_query.from_user.full_name
+        message = f'{user_full_name}, сколько игроков будет участвовать?'
+        await states.UsersStates.wait_response.set()
+        await self.bot.edit_message_reply_markup(chat_id=chat_id,
+                                                 message_id=callback_query.message.message_id, reply_markup=None)
+        await self.bot.delete_message(chat_id=chat_id, message_id=callback_query.message.message_id)
+        await self.bot.send_message(chat_id, text=message)
 
-    async def player_count_handler(self, message: types.Message, state: FSMContext):
-        try:
-            player_count = int(message.text)
-            await message.answer(f'{player_count} игроков, отлично! Начинаем!')
-        except (ValueError, TypeError):
+    @staticmethod
+    async def player_count_handler(message: types.Message, state: FSMContext):
+        player_count = message.text
+
+        button = kb.Buttons().create_inline_kb_pers(int(player_count))
+
+        if player_count.isdigit():
+            await message.answer('Отлично!', reply_markup=button)
+        else:
             await message.answer("Пожалуйста, укажи число игроков")
-            return
 
         await state.finish()
 
