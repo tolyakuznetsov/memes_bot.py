@@ -88,10 +88,13 @@ class TelegramBot:
         message_id = callback_query.message.message_id
 
         # Получаем сохраненную клавиатуру и удаляем нажатую кнопку
-        button = img.db_select_pick_hero(chat_id, user_id)
+        last_keyboard = img.db_select_pick_hero(chat_id, user_id)
+        last_keyboard['inline_keyboard'] = [x for x in last_keyboard['inline_keyboard'] if not any(y['callback_data'] == button_data for y in x)]
+
+
 
         # Отправляем обновленную клавиатуру
-        await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=button)
+        await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=last_keyboard)
 
         await self.bot.send_message(chat_id, f'{user_name} выбрал {hero}')
 
