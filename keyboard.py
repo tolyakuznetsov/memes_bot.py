@@ -70,9 +70,9 @@ class Buttons:
         button_texts = random.sample(texts, num_buttons)
 
         # Создаем клавиатуру с выбранными текстами кнопок
-        inline_kb_pers = InlineKeyboardMarkup(resize_keyboard=True)
-        for text in button_texts:
-            inline_kb_pers.add(InlineKeyboardButton(text=text, callback_data=text))
+        inline_kb_pers = InlineKeyboardMarkup()
+        for hero in button_texts:
+            inline_kb_pers.add(InlineKeyboardButton(text=hero, callback_data=f'hero_{hero}'))
 
         return inline_kb_pers
 

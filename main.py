@@ -1,8 +1,8 @@
 import asyncio
 import io
 import logging
-import requests
 
+import requests
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
@@ -12,8 +12,8 @@ import images
 import images as img
 import keyboard as kb
 import open_files as of
-from config_reader import config
 import states
+from config_reader import config
 
 
 class TelegramBot:
@@ -22,6 +22,7 @@ class TelegramBot:
         self.dp = Dispatcher(self.bot, storage=MemoryStorage())
         self.setup_handlers()
         self.dp.middleware.setup(LoggingMiddleware())
+        self.button_test = None
 
     def setup_handlers(self):
         self.dp.register_message_handler(self.end_command_handler, commands=['end'], state='*')
@@ -34,6 +35,7 @@ class TelegramBot:
         self.dp.register_callback_query_handler(self.send_image_to_chat,
                                                 lambda query: query.data.startswith('image_path'))
         self.dp.register_callback_query_handler(self.send_description, lambda c: c.data == 'button_description')
+        self.dp.register_callback_query_handler(self.user_pick_hero, lambda c: c.data.startswith('hero_'))
 
     @staticmethod
     async def start_command_handler(message: types.Message):
@@ -65,15 +67,33 @@ class TelegramBot:
     @staticmethod
     async def player_count_handler(message: types.Message, state: FSMContext):
         player_count = message.text
+        chat_id = message.chat.id
+        user_id = message.from_user.id
 
         button = kb.Buttons().create_inline_kb_pers(int(player_count))
-
         if player_count.isdigit():
             await message.answer('Отлично!', reply_markup=button)
+            img.db_insert_pick_hero(chat_id, user_id, str(button))
         else:
             await message.answer("Пожалуйста, укажи число игроков")
 
         await state.finish()
+
+    async def user_pick_hero(self, callback_query: types.CallbackQuery):
+        button_data = callback_query.data
+        hero = str(button_data).replace('hero_', '')
+        user_name = callback_query.from_user.full_name
+        chat_id = callback_query.message.chat.id
+        user_id = callback_query.from_user.id
+        message_id = callback_query.message.message_id
+
+        # Получаем сохраненную клавиатуру и удаляем нажатую кнопку
+        button = img.db_select_pick_hero(chat_id, user_id)
+
+        # Отправляем обновленную клавиатуру
+        await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=button)
+
+        await self.bot.send_message(chat_id, f'{user_name} выбрал {hero}')
 
     async def send_description(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id
@@ -162,11 +182,11 @@ class TelegramBot:
 
         # Ждем еще 10 секунд и отправляем опрос
         await asyncio.sleep(10)
-        poll = types.Poll(
-            question='Кто победил?',
-            options=['Игрок 1', 'Игрок 2', 'Игрок 3'],
-            is_anonymous=False
-        )
+        # poll = types.Poll(
+        #    question='Кто победил?',
+        #    options=['Игрок 1', 'Игрок 2', 'Игрок 3'],
+        #    is_anonymous=False
+        # )
         await self.bot.send_poll(chat_id=chat_id,
                                  question='Кто победил?',
                                  options=['Игрок 1', 'Игрок 2', 'Игрок 3'],
