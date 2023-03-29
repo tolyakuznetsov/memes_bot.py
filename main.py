@@ -1,5 +1,6 @@
 import asyncio
 import io
+import json
 import logging
 
 import requests
@@ -57,11 +58,12 @@ class TelegramBot:
     async def start_game_handler(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id
         user_full_name = callback_query.from_user.full_name
+        message_id = callback_query.message.message_id
         message = f'{user_full_name}, сколько игроков будет участвовать?'
         await states.UsersStates.wait_response.set()
         await self.bot.edit_message_reply_markup(chat_id=chat_id,
                                                  message_id=callback_query.message.message_id, reply_markup=None)
-        await self.bot.delete_message(chat_id=chat_id, message_id=callback_query.message.message_id)
+        await self.bot.delete_message(chat_id=chat_id, message_id=message_id)
         await self.bot.send_message(chat_id, text=message)
 
     @staticmethod
@@ -69,11 +71,12 @@ class TelegramBot:
         player_count = message.text
         chat_id = message.chat.id
         user_id = message.from_user.id
+        message_id = message.message_id
 
         button = kb.Buttons().create_inline_kb_pers(int(player_count))
         if player_count.isdigit():
-            await message.answer('Отлично!', reply_markup=button)
-            img.db_insert_pick_hero(chat_id, user_id, str(button))
+            await message.answer('Отлично! Разбирайте персонажей:', reply_markup=button)
+            img.db_insert_pick_hero(chat_id, user_id, str(button), message_id)
         else:
             await message.answer("Пожалуйста, укажи число игроков")
 
@@ -84,14 +87,16 @@ class TelegramBot:
         hero = str(button_data).replace('hero_', '')
         user_name = callback_query.from_user.full_name
         chat_id = callback_query.message.chat.id
-        user_id = callback_query.from_user.id
+        # user_id = callback_query.from_user.id
         message_id = callback_query.message.message_id
 
         # Получаем сохраненную клавиатуру и удаляем нажатую кнопку
-        last_keyboard = img.db_select_pick_hero(chat_id, user_id)
-        last_keyboard['inline_keyboard'] = [x for x in last_keyboard['inline_keyboard'] if not any(y['callback_data'] == button_data for y in x)]
+        last_keyboard = img.db_select_pick_hero(chat_id)
+        last_keyboard['inline_keyboard'] = [x for x in last_keyboard["inline_keyboard"] if
+                                            not any(y["callback_data"] == button_data for y in x)]
 
-
+        last_keyboard_for_save = {"inline_keyboard": last_keyboard["inline_keyboard"]}
+        img.db_update_pick_hero(json.dumps(last_keyboard_for_save), chat_id)
 
         # Отправляем обновленную клавиатуру
         await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=last_keyboard)

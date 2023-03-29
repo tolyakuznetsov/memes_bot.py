@@ -187,18 +187,34 @@ def db_insert_situation(chat_id, situation):
     data_base.conn.commit()
 
 
-def db_insert_pick_hero(chat_id, user_id, button):
-    query = 'INSERT INTO buttons_pick_hero (chat_id, user_id, button) VALUES (?, ?, ?)'
-    values = (chat_id, user_id, button)
+def db_insert_pick_hero(chat_id, user_id, button, message_id):
+    query = 'INSERT INTO buttons_pick_hero (chat_id, user_id, button, message_id) VALUES (?, ?, ?, ?)'
+    values = (chat_id, user_id, button, message_id)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
 
 
-def db_select_pick_hero(chat_id, user_id):
+def db_select_pick_hero(chat_id):
     query = 'SELECT button from buttons_pick_hero ' \
-            'WHERE chat_id =? and user_id =?'
-    values = (chat_id, user_id)
+            'WHERE chat_id =?'
+    values = (chat_id,)
     data_base.cursor.execute(query, values)
     button_str = data_base.cursor.fetchone()[0]
     button = json.loads(button_str)
     return button
+
+
+def db_select_pick_hero_message_id(chat_id):
+    query = 'SELECT message_id from buttons_pick_hero ' \
+            'WHERE chat_id =?'
+    values = (chat_id,)
+    data_base.cursor.execute(query, values)
+    message_id = data_base.cursor.fetchone()
+    return message_id
+
+
+def db_update_pick_hero(keyboard, chat_id):
+    query = "UPDATE buttons_pick_hero SET button = ? WHERE chat_id = ?"
+    values = (keyboard, chat_id)
+    data_base.cursor.execute(query, values)
+    data_base.conn.commit()
