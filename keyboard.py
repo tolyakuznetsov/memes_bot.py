@@ -62,6 +62,7 @@ class Buttons:
 
     @staticmethod
     def create_inline_kb_pers(num_buttons):
+        button_stop_pick_hero = InlineKeyboardButton(text="Завершить выбор", callback_data='button_stop_pick_hero')
         # Открываем файл pers.txt и считываем содержимое
         with open('/Users/anatoliykuznecov/PycharmProjects/bot/text_files/pers.txt', 'r') as f:
             texts = [line.strip() for line in f.readlines()]
@@ -74,6 +75,7 @@ class Buttons:
         for hero in button_texts:
             inline_kb_pers.add(InlineKeyboardButton(text=hero, callback_data=f'hero_{hero}'))
 
+        inline_kb_pers.add(button_stop_pick_hero)
         return inline_kb_pers
 
 
@@ -84,3 +86,4 @@ inline_kb3 = buttons.inline_kb3
 inline_kb4 = buttons.inline_kb4
 inline_kb5 = buttons.inline_kb5
 inline_kb6 = buttons.inline_kb6
+# inline_kb_stop_pick_hero = buttons.inline_kb_stop_pick_hero

@@ -37,6 +37,7 @@ class TelegramBot:
                                                 lambda query: query.data.startswith('image_path'))
         self.dp.register_callback_query_handler(self.send_description, lambda c: c.data == 'button_description')
         self.dp.register_callback_query_handler(self.user_pick_hero, lambda c: c.data.startswith('hero_'))
+        self.dp.register_callback_query_handler(self.stop_pick_hero, lambda c: c.data == 'button_stop_pick_hero')
 
     @staticmethod
     async def start_command_handler(message: types.Message):
@@ -71,7 +72,6 @@ class TelegramBot:
         player_count = message.text
         chat_id = message.chat.id
         user_id = message.from_user.id
-        message_id = message.message_id
 
         button = kb.Buttons().create_inline_kb_pers(int(player_count))
         if player_count.isdigit():
@@ -90,23 +90,31 @@ class TelegramBot:
         user_id = callback_query.from_user.id
         message_id = callback_query.message.message_id
 
-        # Записываем в БД героя, которого выбрал юзер
-        img.db_insert_user_hero(chat_id, user_id, hero)
+        users_hero = img.db_select_user_hero(chat_id, user_id)
+        if users_hero:
+            await self.bot.send_message(chat_id, f'{user_name}, ты уже выбрал {users_hero}')
+        else:
+            # Записываем в БД героя, которого выбрал юзер
+            img.db_insert_user_hero(chat_id, user_id, hero)
 
-        # Получаем сохраненную клавиатуру и удаляем нажатую кнопку
-        last_keyboard = img.db_select_pick_hero(chat_id)
-        last_keyboard['inline_keyboard'] = [x for x in last_keyboard["inline_keyboard"] if
-                                            not any(y["callback_data"] == button_data for y in x)]
+            # Получаем сохраненную клавиатуру и удаляем нажатую кнопку
+            last_keyboard = img.db_select_pick_hero(chat_id)
+            last_keyboard['inline_keyboard'] = [x for x in last_keyboard["inline_keyboard"] if
+                                                not any(y["callback_data"] == button_data for y in x)]
 
-        last_keyboard_for_save = {"inline_keyboard": last_keyboard["inline_keyboard"]}
-        img.db_update_pick_hero(json.dumps(last_keyboard_for_save), chat_id)
+            last_keyboard_for_save = {"inline_keyboard": last_keyboard["inline_keyboard"]}
+            img.db_update_pick_hero(json.dumps(last_keyboard_for_save), chat_id)
 
-        if len(last_keyboard['inline_keyboard']) == 0:
-            img.db_delete_pick_hero(chat_id)
+            # Отправляем обновленную клавиатуру
+            await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=last_keyboard)
+            await self.bot.send_message(chat_id, f'{user_name} выбрал {hero}')
 
-        # Отправляем обновленную клавиатуру
-        await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=last_keyboard)
-        await self.bot.send_message(chat_id, f'{user_name} выбрал {hero}')
+            if len(last_keyboard['inline_keyboard']) == 1 and last_keyboard['inline_keyboard'][0][0]['callback_data'] \
+                    == 'button_stop_pick_hero':
+                img.db_delete_pick_hero(chat_id)
+
+    async def stop_pick_hero(self, callback_query: types.CallbackQuery):
+        pass
 
     async def send_description(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id

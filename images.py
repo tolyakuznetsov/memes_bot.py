@@ -213,7 +213,7 @@ def db_update_pick_hero(keyboard, chat_id):
 
 def db_delete_pick_hero(chat_id):
     query = 'DELETE FROM buttons_pick_hero ' \
-                        'WHERE chat_id =?'
+            'WHERE chat_id =?'
     values = (chat_id,)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
@@ -224,3 +224,12 @@ def db_insert_user_hero(chat_id, user_id, hero):
     values = (chat_id, user_id, hero)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
+
+
+def db_select_user_hero(chat_id, user_id):
+    query = 'SELECT hero from user_hero ' \
+            'WHERE chat_id =? and user_id =?'
+    values = (chat_id, user_id)
+    data_base.cursor.execute(query, values)
+    hero = data_base.cursor.fetchall()[0][0]
+    return hero
