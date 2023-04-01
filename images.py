@@ -187,43 +187,34 @@ def db_insert_situation(chat_id, situation):
     data_base.conn.commit()
 
 
-def db_insert_pick_hero(chat_id, user_id, button, message_id):
-    query = 'INSERT INTO buttons_pick_hero (chat_id, user_id, button, message_id) VALUES (?, ?, ?, ?)'
-    values = (chat_id, user_id, button, message_id)
+def db_insert_keyboard(keyboard, chat_id, user_id, button):
+    query = 'INSERT INTO keyboards (keyboard, chat_id, user_id, button) VALUES (?, ?, ?, ?)'
+    values = (keyboard, chat_id, user_id, button)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
 
 
-def db_select_pick_hero(chat_id):
-    query = 'SELECT button from buttons_pick_hero ' \
-            'WHERE chat_id =?'
-    values = (chat_id,)
+def db_select_keyboard(keyboard, chat_id):
+    query = 'SELECT button from keyboards ' \
+            'WHERE keyboard =? and chat_id =?'
+    values = (keyboard, chat_id)
     data_base.cursor.execute(query, values)
     button_str = data_base.cursor.fetchone()[0]
     button = json.loads(button_str)
     return button
 
 
-def db_select_pick_hero_message_id(chat_id):
-    query = 'SELECT message_id from buttons_pick_hero ' \
-            'WHERE chat_id =?'
-    values = (chat_id,)
-    data_base.cursor.execute(query, values)
-    message_id = data_base.cursor.fetchone()
-    return message_id
-
-
-def db_update_pick_hero(keyboard, chat_id):
-    query = "UPDATE buttons_pick_hero SET button = ? WHERE chat_id = ?"
-    values = (keyboard, chat_id)
+def db_update_keyboard(button, keyboard, chat_id):
+    query = "UPDATE keyboards SET button = ? WHERE keyboard =? and chat_id = ?"
+    values = (button, keyboard, chat_id)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
 
 
-def db_delete_pick_hero(chat_id):
-    query = 'DELETE FROM buttons_pick_hero ' \
-            'WHERE chat_id =?'
-    values = (chat_id,)
+def db_delete_keyboard(keyboard, chat_id):
+    query = 'DELETE FROM keyboards ' \
+            'WHERE keyboard =? and chat_id =?'
+    values = (keyboard, chat_id,)
     data_base.cursor.execute(query, values)
     data_base.conn.commit()
 

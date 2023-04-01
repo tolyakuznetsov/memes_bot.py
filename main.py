@@ -73,12 +73,12 @@ class TelegramBot:
         player_count = message.text
         chat_id = message.chat.id
         user_id = message.from_user.id
-        message_id = message.message_id
+        _keyboard = 'inline_kb_pers'
 
         button = kb.Buttons().create_inline_kb_pers(int(player_count))
         if player_count.isdigit():
             await message.answer('Отлично! Разбирайте персонажей:', reply_markup=button)
-            img.db_insert_pick_hero(chat_id, user_id, str(button), message_id)
+            img.db_insert_keyboard(_keyboard, chat_id, user_id, str(button))
         else:
             await message.answer("Пожалуйста, укажи число игроков")
 
@@ -91,6 +91,7 @@ class TelegramBot:
         chat_id = callback_query.message.chat.id
         user_id = callback_query.from_user.id
         message_id = callback_query.message.message_id
+        _keyboard = 'inline_kb_pers'
 
         users_hero = img.db_select_user_hero(chat_id, user_id)
         if users_hero:
@@ -100,12 +101,12 @@ class TelegramBot:
             img.db_insert_user_hero(chat_id, user_id, hero)
 
             # Получаем сохраненную клавиатуру и удаляем нажатую кнопку
-            last_keyboard = img.db_select_pick_hero(chat_id)
+            last_keyboard = img.db_select_keyboard(_keyboard, chat_id)
             last_keyboard['inline_keyboard'] = [x for x in last_keyboard["inline_keyboard"] if
                                                 not any(y["callback_data"] == button_data for y in x)]
 
             last_keyboard_for_save = {"inline_keyboard": last_keyboard["inline_keyboard"]}
-            img.db_update_pick_hero(json.dumps(last_keyboard_for_save), chat_id)
+            img.db_update_keyboard(json.dumps(last_keyboard_for_save), _keyboard, chat_id)
 
             # Отправляем обновленную клавиатуру
             await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=last_keyboard)
@@ -113,18 +114,20 @@ class TelegramBot:
 
             if len(last_keyboard['inline_keyboard']) == 1 and last_keyboard['inline_keyboard'][0][0]['callback_data'] \
                     == 'button_stop_pick_hero':
-                img.db_delete_pick_hero(chat_id)
+                img.db_delete_keyboard(_keyboard, chat_id)
 
     async def stop_pick_hero(self, callback_query: types.CallbackQuery):
+
         chat_id = callback_query.message.chat.id
         message_id = callback_query.message.message_id
+        _keyboard = 'inline_kb_pers'
 
         count_users = img.db_select_check_count_players(chat_id)
 
         if not count_users:
             await self.bot.send_message(chat_id, text='Вы не выбрали персонажей')
         else:
-            img.db_delete_pick_hero(chat_id)
+            img.db_delete_keyboard(_keyboard, chat_id)
 
             await self.bot.delete_message(chat_id=chat_id, message_id=message_id)
             await self.bot.send_message(chat_id, text='Начинаем игру', reply_markup=keyboard.inline_kb2)
@@ -201,7 +204,7 @@ class TelegramBot:
                     img.db_update_user_done_turn(user_id, chat_id, sent_card=False)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
-        # poll = types.Poll(question='Какой язык программирования вы предпочитаете?', options=['Python', 'Java', 'C++'])
+
         chat_id = callback_query.message.chat.id
         sit = of.send_situation(chat_id)
         img.db_insert_situation(chat_id, sit)
@@ -216,11 +219,6 @@ class TelegramBot:
 
         # Ждем еще 10 секунд и отправляем опрос
         await asyncio.sleep(10)
-        # poll = types.Poll(
-        #    question='Кто победил?',
-        #    options=['Игрок 1', 'Игрок 2', 'Игрок 3'],
-        #    is_anonymous=False
-        # )
         await self.bot.send_poll(chat_id=chat_id,
                                  question='Кто победил?',
                                  options=['Игрок 1', 'Игрок 2', 'Игрок 3'],
