@@ -33,7 +33,7 @@ class TelegramBot:
         self.dp.register_callback_query_handler(self.start_game_handler, lambda c: c.data == 'button_start_game')
         self.dp.register_callback_query_handler(self.rules_handler, lambda c: c.data == 'button_rules')
         self.dp.register_callback_query_handler(self.send_random_images_handler, lambda c: c.data == 'button_get_memes')
-        self.dp.register_callback_query_handler(self.send_situation, lambda c: c.data == 'botton_get_situatoin')
+        self.dp.register_callback_query_handler(self.send_situation, lambda c: c.data == 'button_get_situation')
         self.dp.register_callback_query_handler(self.send_image_to_chat,
                                                 lambda query: query.data.startswith('image_path'))
         self.dp.register_callback_query_handler(self.send_description, lambda c: c.data == 'button_description')
@@ -147,6 +147,14 @@ class TelegramBot:
         user_id = callback_query.from_user.id
         image_list = img.open_random_images(chat_id, user_id)
         img.db_delete_sent_cards_in_turn(user_id, chat_id)
+        message_id = callback_query.message.message_id
+        callback_data = callback_query.data
+
+        current_keyboard = callback_query.message.reply_markup
+        update_keyboard = keyboard.buttons.delete_button(current_keyboard, callback_data)
+
+        await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=update_keyboard)
+
         if image_list:
             for image_bytes, image_path in image_list:
                 # Генерация уникальных uuid для картинок
@@ -208,6 +216,13 @@ class TelegramBot:
         chat_id = callback_query.message.chat.id
         sit = of.send_situation(chat_id)
         img.db_insert_situation(chat_id, sit)
+        message_id = callback_query.message.message_id
+        callback_data = callback_query.data
+        current_keyboard = callback_query.message.reply_markup
+        update_keyboard = keyboard.buttons.delete_button(current_keyboard, callback_data)
+
+        await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=update_keyboard)
+
         await self.bot.send_message(chat_id, text=sit)
 
         # Отправляем сообщение о том, что пользователю дается 30 секунд на выбор карты

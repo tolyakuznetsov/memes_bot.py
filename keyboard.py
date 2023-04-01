@@ -7,6 +7,8 @@ import random
 
 class Buttons:
     def __init__(self):
+        self.inline_kb_after_get_sit = None
+        self.inline_kb_after_get_mem = None
         self.inline_kb_count_users = None
         self.inline_kb1 = None
         self.inline_kb2 = None
@@ -40,8 +42,10 @@ class Buttons:
     def create_inline_kb2(self):
         button_go_to_bot = InlineKeyboardButton(text="Перейти в бота", url="https://t.me/mem_haha_bot")
         button_get_memes = InlineKeyboardButton('Получить мемы', callback_data='button_get_memes')
-        botton_get_situatoin = InlineKeyboardButton(text="Получить ситуацию", callback_data='botton_get_situatoin')
-        self.inline_kb2 = InlineKeyboardMarkup().add(botton_get_situatoin).add(button_get_memes).add(button_go_to_bot)
+        button_get_situation = InlineKeyboardButton(text="Получить ситуацию", callback_data='button_get_situation')
+        self.inline_kb2 = InlineKeyboardMarkup().add(button_get_situation).add(button_get_memes).add(button_go_to_bot)
+        self.inline_kb_after_get_sit = InlineKeyboardMarkup().add(button_get_memes).add(button_go_to_bot)
+        self.inline_kb_after_get_mem = InlineKeyboardMarkup().add(button_get_situation).add(button_go_to_bot)
 
     def create_inline_kb3(self):
         button_send_image_to_chat = InlineKeyboardButton("Отправить картинку в чат",
@@ -78,6 +82,20 @@ class Buttons:
         inline_kb_pers.add(button_stop_pick_hero)
         return inline_kb_pers
 
+    @staticmethod
+    def delete_button(current_keyboard, callback_data):
+        new_keyboard = []
+        for row in current_keyboard["inline_keyboard"]:
+            new_row = []
+            for button in row:
+                if button["callback_data"] != callback_data:
+                    new_row.append(button)
+            if new_row:
+                new_keyboard.append(new_row)
+
+        update_keyboard = {"inline_keyboard": new_keyboard}
+        return update_keyboard
+
 
 buttons = Buttons()
 inline_kb1 = buttons.inline_kb1
@@ -86,4 +104,3 @@ inline_kb3 = buttons.inline_kb3
 inline_kb4 = buttons.inline_kb4
 inline_kb5 = buttons.inline_kb5
 inline_kb6 = buttons.inline_kb6
-# inline_kb_stop_pick_hero = buttons.inline_kb_stop_pick_hero
