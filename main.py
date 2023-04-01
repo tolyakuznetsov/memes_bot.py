@@ -11,6 +11,7 @@ from aiogram.dispatcher import FSMContext
 
 import images
 import images as img
+import keyboard
 import keyboard as kb
 import open_files as of
 import states
@@ -72,11 +73,12 @@ class TelegramBot:
         player_count = message.text
         chat_id = message.chat.id
         user_id = message.from_user.id
+        message_id = message.message_id
 
         button = kb.Buttons().create_inline_kb_pers(int(player_count))
         if player_count.isdigit():
             await message.answer('Отлично! Разбирайте персонажей:', reply_markup=button)
-            img.db_insert_pick_hero(chat_id, user_id, str(button))
+            img.db_insert_pick_hero(chat_id, user_id, str(button), message_id)
         else:
             await message.answer("Пожалуйста, укажи число игроков")
 
@@ -114,7 +116,18 @@ class TelegramBot:
                 img.db_delete_pick_hero(chat_id)
 
     async def stop_pick_hero(self, callback_query: types.CallbackQuery):
-        pass
+        chat_id = callback_query.message.chat.id
+        message_id = callback_query.message.message_id
+
+        count_users = img.db_select_check_count_players(chat_id)
+
+        if not count_users:
+            await self.bot.send_message(chat_id, text='Вы не выбрали персонажей')
+        else:
+            img.db_delete_pick_hero(chat_id)
+
+            await self.bot.delete_message(chat_id=chat_id, message_id=message_id)
+            await self.bot.send_message(chat_id, text='Начинаем игру', reply_markup=keyboard.inline_kb2)
 
     async def send_description(self, callback_query: types.CallbackQuery):
         chat_id = callback_query.message.chat.id

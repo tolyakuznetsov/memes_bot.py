@@ -19,7 +19,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS user_sent_cards
 cursor.execute('''CREATE TABLE IF NOT EXISTS sent_situation
                   (id INTEGER, chat_id TEXT, situation TEXT, PRIMARY KEY (id))''')
 cursor.execute('''CREATE TABLE IF NOT EXISTS buttons_pick_hero
-                  (id INTEGER, chat_id TEXT, user_id TEXT, button TEXT, PRIMARY KEY (id))''')
+                  (id INTEGER, chat_id TEXT, user_id TEXT, button TEXT, message_id, PRIMARY KEY (id))''')
 cursor.execute('''CREATE TABLE IF NOT EXISTS user_hero
                   (id INTEGER, chat_id TEXT, user_id TEXT, hero TEXT, PRIMARY KEY (id))''')
 
