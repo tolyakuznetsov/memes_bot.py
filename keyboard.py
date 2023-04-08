@@ -44,8 +44,6 @@ class Buttons:
         button_get_memes = InlineKeyboardButton('Получить мемы', callback_data='button_get_memes')
         button_get_situation = InlineKeyboardButton(text="Получить ситуацию", callback_data='button_get_situation')
         self.inline_kb2 = InlineKeyboardMarkup().add(button_get_situation).add(button_get_memes).add(button_go_to_bot)
-        self.inline_kb_after_get_sit = InlineKeyboardMarkup().add(button_get_memes).add(button_go_to_bot)
-        self.inline_kb_after_get_mem = InlineKeyboardMarkup().add(button_get_situation).add(button_go_to_bot)
 
     def create_inline_kb3(self):
         button_send_image_to_chat = InlineKeyboardButton("Отправить картинку в чат",
@@ -68,7 +66,7 @@ class Buttons:
     def create_inline_kb_pers(num_buttons):
         button_stop_pick_hero = InlineKeyboardButton(text="Завершить выбор", callback_data='button_stop_pick_hero')
         # Открываем файл pers.txt и считываем содержимое
-        with open('/Users/anatoliykuznecov/PycharmProjects/bot/text_files/pers.txt', 'r') as f:
+        with open('text_files/pers.txt', 'r') as f:
             texts = [line.strip() for line in f.readlines()]
 
         # Случайным образом выбираем num_buttons текстов из файла

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     class Config:
         # Имя файла, откуда будут прочитаны данные
         # (относительно текущей рабочей директории)
-        env_file = 'venv/.env'
+        env_file = 'venv/t.env'
         # Кодировка читаемого файла
         env_file_encoding = 'utf-8'
 

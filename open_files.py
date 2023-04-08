@@ -1,10 +1,9 @@
 import random
-import images
 import data_base
 
 
 def send_rules():
-    with open("/Users/anatoliykuznecov/PycharmProjects/bot/text_files/rules.txt", "r", encoding="utf-8") as file_rules:
+    with open("text_files/rules.txt", "r", encoding="utf-8") as file_rules:
         text_2 = file_rules.read()
     return text_2
 
@@ -15,7 +14,7 @@ def send_situation(chat_id):
     last_record = data_base.cursor.fetchall()
     sent_situations = [row[0] for row in last_record]
 
-    with open("/Users/anatoliykuznecov/PycharmProjects/bot/text_files/situation.txt", "r", encoding="utf-8") as file:
+    with open("text_files/situation.txt", "r", encoding="utf-8") as file:
         text = file.read().splitlines()
 
     avialible_situations = set(text) - set(sent_situations)
@@ -29,18 +28,24 @@ def send_situation(chat_id):
 
 
 def send_welcome_text():
-    with open("/Users/anatoliykuznecov/PycharmProjects/bot/text_files/welcome_text.txt", "r", encoding="utf-8") as file:
+    with open("text_files/welcome_text.txt", "r", encoding="utf-8") as file:
         text = file.read()
     return text
 
 
 def dilimeter():
-    path = '/Users/anatoliykuznecov/PycharmProjects/bot/img/delimiter/1.png'
-    file = images.read_image_bytes(path)
+    path = 'img/delimiter/1.png'
+    file = read_image_bytes(path)
     return file
 
 
 def send_description():
-    with open("/Users/anatoliykuznecov/PycharmProjects/bot/text_files/description.txt", "r", encoding="utf-8") as file:
+    with open("text_files/description.txt", "r", encoding="utf-8") as file:
         text = file.read()
     return text
+
+
+def read_image_bytes(image_path: str):
+    with open(image_path, 'rb') as f:
+        image_bytes = f.read()
+    return image_bytes

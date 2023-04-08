@@ -19,8 +19,9 @@ from config_reader import config
 
 
 class TelegramBot:
+    # PROXY_URL = "http://proxy.server:3128"
     def __init__(self, token):
-        self.bot = Bot(token=token)
+        self.bot = Bot(token=token)  # , proxy=self.PROXY_URL
         self.dp = Dispatcher(self.bot, storage=MemoryStorage())
         self.setup_handlers()
         self.dp.middleware.setup(LoggingMiddleware())
@@ -54,6 +55,12 @@ class TelegramBot:
         user_id = message.from_user.id
         chat_id = message.chat.id
         deleted = img.delete_images_from_db(user_id, chat_id)
+        img.db_clean_keyboard(chat_id)
+        img.db_clean_situations(chat_id)
+        img.db_clean_user_hero(chat_id)
+        img.db_clean_user_sent_card(chat_id)
+        img.db_clean_user_sent_cards(chat_id)
+        img.db_clean_card_in_hand(chat_id)
         await message.reply(deleted)
         await state.finish()
 
@@ -147,13 +154,13 @@ class TelegramBot:
         user_id = callback_query.from_user.id
         image_list = img.open_random_images(chat_id, user_id)
         img.db_delete_sent_cards_in_turn(user_id, chat_id)
-        message_id = callback_query.message.message_id
-        callback_data = callback_query.data
+        # message_id = callback_query.message.message_id
+        # callback_data = callback_query.data
 
-        current_keyboard = callback_query.message.reply_markup
-        update_keyboard = keyboard.buttons.delete_button(current_keyboard, callback_data)
+        # current_keyboard = callback_query.message.reply_markup
+        # update_keyboard = keyboard.buttons.delete_button(current_keyboard, callback_data)
 
-        await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=update_keyboard)
+        # await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=update_keyboard)
 
         if image_list:
             for image_bytes, image_path in image_list:
@@ -169,7 +176,7 @@ class TelegramBot:
 
                 # Сохранение данных картинки в базу данных
                 img.save_user_chat_to_db(uniq_id, user_id, chat_id, file_id)
-                img.db_save_card_in_hand(uniq_id, user_id, file_id, in_hand=True)
+                img.db_save_card_in_hand(uniq_id, user_id, chat_id, file_id, in_hand=True)
                 img.db_insert_user_done_turn(user_id, chat_id, sent_card=True)
 
             # Кнопка возврата в чат
@@ -208,7 +215,7 @@ class TelegramBot:
                     await self.bot.send_photo(chat_id=chat_id, photo=image, caption=caption)
                     in_hand = False
                     img.update_in_hand_flag(file_id, user_id, in_hand)
-                    img.db_insert_user_sent_card(user_id, file_id)
+                    img.db_insert_user_sent_card(user_id, chat_id, file_id)
                     img.db_update_user_done_turn(user_id, chat_id, sent_card=False)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
@@ -220,6 +227,7 @@ class TelegramBot:
         callback_data = callback_query.data
         current_keyboard = callback_query.message.reply_markup
         update_keyboard = keyboard.buttons.delete_button(current_keyboard, callback_data)
+        hero_pool = img.db_select_pool_users(chat_id)
 
         await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=update_keyboard)
 
@@ -236,8 +244,10 @@ class TelegramBot:
         await asyncio.sleep(10)
         await self.bot.send_poll(chat_id=chat_id,
                                  question='Кто победил?',
-                                 options=['Игрок 1', 'Игрок 2', 'Игрок 3'],
+                                 options=hero_pool,
                                  is_anonymous=False)
+        await self.bot.send_message(chat_id, text='Пополнить руку и получить ситуацию',
+                                    reply_markup=keyboard.inline_kb2)
 
         # Удаляем сообщения о таймере
         await self.bot.delete_message(chat_id, message_30_sec.message_id)
