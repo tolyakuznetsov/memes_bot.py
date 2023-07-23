@@ -1,10 +1,10 @@
-from pydantic import BaseSettings, SecretStr
+import pydantic
 
 
-class Settings(BaseSettings):
+class Settings(pydantic.BaseSettings):
     # Желательно вместо str использовать SecretStr
     # для конфиденциальных данных, например, токена бота
-    bot_token: SecretStr
+    bot_token: pydantic.SecretStr
 
     # Вложенный класс с дополнительными указаниями для настроек
     class Config:
