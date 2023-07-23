@@ -1,6 +1,5 @@
 pydantic
 typing
 asyncio
-io
 logging
 aiogram
