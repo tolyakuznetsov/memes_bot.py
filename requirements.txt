@@ -2,3 +2,4 @@ pydantic
 typing
 asyncio
 aiogram
+requests
