@@ -1,0 +1,10 @@
+pydantic
+sqlite3
+os
+typing
+asyncio
+io
+json
+logging
+requests
+aiogram
