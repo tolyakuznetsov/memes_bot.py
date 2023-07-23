@@ -15,11 +15,13 @@ import open_files as of
 import states
 #from config_reader import config
 
+token = '5817017896:AAG2ZD86P-WlD6Ede_JtWW6fErppZg3JGh0'
+
 
 class TelegramBot:
     # PROXY_URL = "http://proxy.server:3128"
     def __init__(self, token):
-        self.bot = Bot(token='5817017896:AAG2ZD86P-WlD6Ede_JtWW6fErppZg3JGh0')  # , proxy=self.PROXY_URL
+        self.bot = Bot(token=token)  # , proxy=self.PROXY_URL
         self.dp = Dispatcher(self.bot, storage=MemoryStorage())
         self.setup_handlers()
         self.dp.middleware.setup(LoggingMiddleware())
@@ -205,7 +207,7 @@ class TelegramBot:
         chat_id = db.get_mapp_user_chat(callbackQuery.from_user.id)
         file_info = await self.bot.get_file(file_id)
         user_id = callbackQuery.from_user.id
-        image_url = f'https://api.telegram.org/file/bot{config.bot_token.get_secret_value()}/{file_info.file_path}'
+        image_url = f'https://api.telegram.org/file/bot{token}/{file_info.file_path}'
         was_sent_img = db.check_image_in_db(file_id)
         was_sent_imgs = db.user_sent_cards_in_turn(user_id, chat_id, sent_card=False)
         if was_sent_img:
@@ -261,5 +263,5 @@ class TelegramBot:
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)  # логгирование
-    bot = TelegramBot(token=config.bot_token.get_secret_value())
+    bot = TelegramBot(token=token)
     executor.start_polling(bot.dp, skip_updates=True)
