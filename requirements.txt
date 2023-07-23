@@ -1,9 +1,6 @@
 pydantic
-os
 typing
 asyncio
 io
-json
 logging
-requests
 aiogram
