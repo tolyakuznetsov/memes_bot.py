@@ -13,13 +13,13 @@ import db_query as db
 import keyboard as kb
 import open_files as of
 import states
-from config_reader import config
+#from config_reader import config
 
 
 class TelegramBot:
     # PROXY_URL = "http://proxy.server:3128"
     def __init__(self, token):
-        self.bot = Bot(token=token)  # , proxy=self.PROXY_URL
+        self.bot = Bot(token='5817017896:AAG2ZD86P-WlD6Ede_JtWW6fErppZg3JGh0')  # , proxy=self.PROXY_URL
         self.dp = Dispatcher(self.bot, storage=MemoryStorage())
         self.setup_handlers()
         self.dp.middleware.setup(LoggingMiddleware())
