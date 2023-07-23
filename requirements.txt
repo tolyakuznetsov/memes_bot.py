@@ -3,4 +3,4 @@ typing
 asyncio
 aiogram
 requests
-sqlite3
+db-sqlite3
