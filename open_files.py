@@ -1,5 +1,5 @@
 import random
-import data_base
+import create_data_base
 
 
 def send_rules():
@@ -10,8 +10,8 @@ def send_rules():
 
 def send_situation(chat_id):
     query = 'select situation from sent_situation WHERE chat_id =?'
-    data_base.cursor.execute(query, (chat_id,))
-    last_record = data_base.cursor.fetchall()
+    create_data_base.cursor.execute(query, (chat_id,))
+    last_record = create_data_base.cursor.fetchall()
     sent_situations = [row[0] for row in last_record]
 
     with open("text_files/situation.txt", "r", encoding="utf-8") as file:
