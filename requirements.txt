@@ -1,4 +1,4 @@
-pydantic
+pydantic-settings
 typing
 asyncio
 aiogram
