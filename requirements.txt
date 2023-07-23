@@ -3,3 +3,4 @@ typing
 asyncio
 aiogram
 requests
+sqlite3
