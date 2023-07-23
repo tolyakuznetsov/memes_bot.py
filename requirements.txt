@@ -1,5 +1,4 @@
 pydantic
-sqlite3
 os
 typing
 asyncio
