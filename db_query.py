@@ -17,6 +17,16 @@ def get_image_files(path: str):
     return image_files
 
 
+def clean_db(chat_id):
+    db_clean_keyboard(chat_id)
+    db_clean_situations(chat_id)
+    db_clean_user_hero(chat_id)
+    db_clean_user_sent_card(chat_id)
+    db_clean_user_sent_cards(chat_id)
+    db_clean_card_in_hand(chat_id)
+    db_clean_states(chat_id)
+
+
 def get_available_images(chat_id: int, user_id: int, available_images: list):
     query_in_hand = 'SELECT image_path from sent_images si \
              JOIN card_in_hand cih on si.uniq_id = cih.uniq_id \
@@ -39,7 +49,7 @@ def get_available_images(chat_id: int, user_id: int, available_images: list):
 
 def add_image_to_database(uniq_id, user_id: int, chat_id: int, image_path: str, in_hand: bool):
     create_data_base.cursor.execute("INSERT INTO sent_images (uniq_id, user_id, chat_id, image_path, in_hand) "
-                             "VALUES (?, ?, ?, ?, ?)",
+                                    "VALUES (?, ?, ?, ?, ?)",
                                     (uniq_id, user_id, chat_id, image_path, in_hand))
     create_data_base.conn.commit()
 
@@ -73,7 +83,8 @@ def open_random_images(chat_id: int, user_id: int) -> List[Tuple[bytes, str]]:
 
 
 def save_user_chat_to_db(uniq_id, user_id, chat_id, file_id):
-    create_data_base.cursor.execute("INSERT INTO user_chat_file_id (uniq_id, user_id, chat_id, file_id) VALUES (?, ?, ?, ?)",
+    create_data_base.cursor.execute("INSERT INTO user_chat_file_id (uniq_id, user_id, chat_id, file_id) VALUES (?, ?, "
+                                    "?, ?)",
                                     (uniq_id, user_id, chat_id, file_id))
     create_data_base.conn.commit()
 
@@ -115,7 +126,7 @@ def delete_images_from_db(user_id, chat_id):
 
     query_card_in_hand = 'DELETE FROM user_chat_file_id ' \
                          'WHERE chat_id = ?'
-    values_user_chat_file_id = (chat_id, )
+    values_user_chat_file_id = (chat_id,)
     create_data_base.cursor.execute(query_card_in_hand, values_user_chat_file_id)
     create_data_base.conn.commit()
     return 'Игра закончена'
@@ -248,7 +259,6 @@ def db_select_user_hero(chat_id, user_id):
         return False
 
 
-
 def db_select_check_count_players(chat_id):
     query = 'SELECT count(hero) from user_hero ' \
             'WHERE chat_id =?'
@@ -297,6 +307,28 @@ def db_clean_user_sent_cards(chat_id):
 
 def db_clean_card_in_hand(chat_id):
     query = 'DELETE FROM card_in_hand ' \
+            'WHERE chat_id =?'
+    values = (chat_id,)
+    create_data_base.cursor.execute(query, values)
+    create_data_base.conn.commit()
+
+def db_update_state(chat_id, type, state):
+    query = 'INSERT INTO states (chat_id, type, active) VALUES (?, ?, ?) ' \
+            'ON CONFLICT(chat_id) DO UPDATE SET type=?, active=?'
+    values = (chat_id, type, state, type, state)
+    create_data_base.cursor.execute(query, values)
+    create_data_base.conn.commit()
+
+def db_get_state(chat_id, type):
+    query = 'SELECT active FROM states ' \
+            'WHERE chat_id=? AND type=?'
+    values = (chat_id, type)
+    create_data_base.cursor.execute(query, values)
+    state = create_data_base.cursor.fetchall()[0][0]
+    return state
+
+def db_clean_states(chat_id):
+    query = 'DELETE FROM states ' \
             'WHERE chat_id =?'
     values = (chat_id,)
     create_data_base.cursor.execute(query, values)

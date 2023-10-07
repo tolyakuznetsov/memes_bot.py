@@ -13,7 +13,8 @@ import db_query as db
 import keyboard as kb
 import open_files as of
 import states
-#from config_reader import config
+
+# from config_reader import config
 
 token = '5817017896:AAG2ZD86P-WlD6Ede_JtWW6fErppZg3JGh0'
 
@@ -44,6 +45,7 @@ class TelegramBot:
     @staticmethod
     async def start_command_handler(message: types.Message):
         chat_id = message.chat.id
+        db.clean_db(chat_id) # Очистка БД перед стартом новой игры
         if chat_id == 274921311:
             await message.reply('Привет! Я бот для игры в ..., добавь меня в чат, чтобы начать игру',
                                 reply_markup=kb.inline_kb6)
@@ -55,12 +57,7 @@ class TelegramBot:
         user_id = message.from_user.id
         chat_id = message.chat.id
         deleted = db.delete_images_from_db(user_id, chat_id)
-        db.db_clean_keyboard(chat_id)
-        db.db_clean_situations(chat_id)
-        db.db_clean_user_hero(chat_id)
-        db.db_clean_user_sent_card(chat_id)
-        db.db_clean_user_sent_cards(chat_id)
-        db.db_clean_card_in_hand(chat_id)
+        db.clean_db(chat_id)
         await message.reply(deleted)
         await state.finish()
 
@@ -69,6 +66,8 @@ class TelegramBot:
         user_full_name = callback_query.from_user.full_name
         message_id = callback_query.message.message_id
         message = f'{user_full_name}, сколько игроков будет участвовать?'
+        db.clean_db(chat_id)
+
         await states.UsersStates.wait_response.set()
         await self.bot.edit_message_reply_markup(chat_id=chat_id,
                                                  message_id=callback_query.message.message_id, reply_markup=None)
@@ -82,8 +81,12 @@ class TelegramBot:
         user_id = message.from_user.id
         _keyboard = 'inline_kb_pers'
 
-        if player_count == '1':
+        if player_count[0] == '0':
+            await message.answer('0')
+        elif player_count == '1':
             await message.answer('Ты не можешь играть один, укажи другое количество игроков')
+        elif player_count > '3':
+            await message.answer('Максимальное количество игроков - 3')
         else:
             if player_count.isdigit():
                 button = kb.Buttons().create_inline_kb_pers(int(player_count))
@@ -102,29 +105,30 @@ class TelegramBot:
         message_id = callback_query.message.message_id
         _keyboard = 'inline_kb_pers'
 
-
         users_hero = db.db_select_user_hero(chat_id, user_id)
         if users_hero:
             await self.bot.send_message(chat_id, f'{user_name}, ты уже выбрал {users_hero}')
         else:
-            # Записываем в БД героя, которого выбрал юзер
-            db.db_insert_user_hero(chat_id, user_id, hero)
+            db.db_insert_user_hero(chat_id, user_id, hero) # Записываем в БД героя, которого выбрал юзер
 
-            # Получаем сохраненную клавиатуру и удаляем нажатую кнопку
-            last_keyboard = db.db_select_keyboard(_keyboard, chat_id)
-            last_keyboard['inline_keyboard'] = [x for x in last_keyboard["inline_keyboard"] if
+            last_keyboard = db.db_select_keyboard(_keyboard, chat_id)  # Получаем последнюю сохраненную клавиатуру
+            last_keyboard['inline_keyboard'] = [x for x in last_keyboard["inline_keyboard"] if  # Удаляем кнопку
                                                 not any(y["callback_data"] == button_data for y in x)]
 
-            last_keyboard_for_save = {"inline_keyboard": last_keyboard["inline_keyboard"]}
-            db.db_update_keyboard(json.dumps(last_keyboard_for_save), _keyboard, chat_id)
+            if len(last_keyboard['inline_keyboard']) == 1:
+                await self.bot.send_message(chat_id, f'{user_name} выбрал {hero}')
+                await self.stop_pick_hero(callback_query)
+            else:
+                last_keyboard_for_save = {"inline_keyboard": last_keyboard["inline_keyboard"]}
+                db.db_update_keyboard(json.dumps(last_keyboard_for_save), _keyboard, chat_id)
 
-            # Отправляем обновленную клавиатуру
-            await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=last_keyboard)
-            await self.bot.send_message(chat_id, f'{user_name} выбрал {hero}')
+                # Отправляем обновленную клавиатуру
+                await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=last_keyboard)
+                await self.bot.send_message(chat_id, f'{user_name} выбрал {hero}')
 
-            if len(last_keyboard['inline_keyboard']) == 1 and last_keyboard['inline_keyboard'][0][0]['callback_data'] \
-                    == 'button_stop_pick_hero':
-                db.db_delete_keyboard(_keyboard, chat_id)
+                if len(last_keyboard['inline_keyboard']) == 1 and last_keyboard['inline_keyboard'][0][0]['callback_data'] \
+                        == 'button_stop_pick_hero':
+                    db.db_delete_keyboard(_keyboard, chat_id)
 
     async def stop_pick_hero(self, callback_query: types.CallbackQuery):
 
@@ -133,8 +137,6 @@ class TelegramBot:
         _keyboard = 'inline_kb_pers'
 
         count_users = db.db_select_check_count_players(chat_id)
-
-
 
         if count_users == 0:
             await self.bot.send_message(chat_id, text='Вы не выбрали персонажей')
@@ -203,30 +205,38 @@ class TelegramBot:
                                         reply_markup=kb.inline_kb4)
 
     async def send_image_to_chat(self, callbackQuery: types.CallbackQuery):
-        file_id = callbackQuery.message.photo[-1].file_id
         chat_id = db.get_mapp_user_chat(callbackQuery.from_user.id)
-        file_info = await self.bot.get_file(file_id)
-        user_id = callbackQuery.from_user.id
-        image_url = f'https://api.telegram.org/file/bot{token}/{file_info.file_path}'
-        was_sent_img = db.check_image_in_db(file_id)
-        was_sent_imgs = db.user_sent_cards_in_turn(user_id, chat_id, sent_card=False)
-        if was_sent_img:
-            await self.bot.send_message(callbackQuery.from_user.id, text='Эта карта уже была отправлена')
-        elif was_sent_imgs:
-            await self.bot.send_message(callbackQuery.from_user.id, text='Ты уже отправлял карты в этот ход')
-        else:
-            with requests.get(image_url, stream=True) as r:
-                r.raise_for_status()
-                with io.BytesIO(r.content) as image:
-                    caption = 'Карточка от ' + callbackQuery.from_user.full_name
-                    await self.bot.send_photo(chat_id=chat_id, photo=image, caption=caption)
-                    in_hand = False
-                    db.update_in_hand_flag(file_id, user_id, in_hand)
-                    db.db_insert_user_sent_card(user_id, chat_id, file_id)
-                    db.db_update_user_done_turn(user_id, chat_id, sent_card=False)
+        type_of_state = 'turn'
+        state = int(db.db_get_state(chat_id, type_of_state))
+        print(state)
+        if not state:
+            await self.bot.send_message(callbackQuery.from_user.id, text='Ты не можешь отправлять картинки вне хода')
+        elif state:
+
+            file_id = callbackQuery.message.photo[-1].file_id
+            file_info = await self.bot.get_file(file_id)
+            user_id = callbackQuery.from_user.id
+            image_url = f'https://api.telegram.org/file/bot{token}/{file_info.file_path}'
+            was_sent_img = db.check_image_in_db(file_id)
+            was_sent_imgs = db.user_sent_cards_in_turn(user_id, chat_id, sent_card=False)
+            if was_sent_img:
+                await self.bot.send_message(callbackQuery.from_user.id, text='Эта карта уже была отправлена')
+            elif was_sent_imgs:
+                await self.bot.send_message(callbackQuery.from_user.id, text='Ты уже отправлял карты в этот ход')
+            else:
+                with requests.get(image_url, stream=True) as r:
+                    r.raise_for_status()
+                    with io.BytesIO(r.content) as image:
+                        caption = 'Карточка от ' + callbackQuery.from_user.full_name
+                        await self.bot.send_photo(chat_id=chat_id, photo=image, caption=caption)
+                        in_hand = False
+                        db.update_in_hand_flag(file_id, user_id, in_hand)
+                        db.db_insert_user_sent_card(user_id, chat_id, file_id)
+                        db.db_update_user_done_turn(user_id, chat_id, sent_card=False)
 
     async def send_situation(self, callback_query: types.CallbackQuery):
 
+        type_state = 'turn'
         chat_id = callback_query.message.chat.id
         sit = of.send_situation(chat_id)
         db.db_insert_situation(chat_id, sit)
@@ -235,6 +245,8 @@ class TelegramBot:
         current_keyboard = callback_query.message.reply_markup
         update_keyboard = kb.buttons.delete_button(current_keyboard, callback_data)
         hero_pool = db.db_select_pool_users(chat_id)
+
+        db.db_update_state(chat_id, type_state, True)
 
         await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=update_keyboard)
 
@@ -259,6 +271,8 @@ class TelegramBot:
         # Удаляем сообщения о таймере
         await self.bot.delete_message(chat_id, message_30_sec.message_id)
         await self.bot.delete_message(chat_id, message_10_sec.message_id)
+        db.db_update_state(chat_id, type_state, False)
+
 
 
 if __name__ == '__main__':

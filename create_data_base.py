@@ -22,5 +22,8 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS keyboards
                   (id INTEGER, keyboard TEXT, chat_id TEXT, user_id TEXT, button TEXT, PRIMARY KEY (id))''')
 cursor.execute('''CREATE TABLE IF NOT EXISTS user_hero
                   (id INTEGER, chat_id TEXT, user_id TEXT, hero TEXT, PRIMARY KEY (id))''')
+cursor.execute('''CREATE TABLE IF NOT EXISTS states
+                  (chat_id TEXT, type TEXT, active TEXT, PRIMARY KEY (chat_id))''')
+
 
 conn.commit()
