@@ -20,9 +20,8 @@ token = '5817017896:AAG2ZD86P-WlD6Ede_JtWW6fErppZg3JGh0'
 
 
 class TelegramBot:
-    # PROXY_URL = "http://proxy.server:3128"
     def __init__(self, token):
-        self.bot = Bot(token=token)  # , proxy=self.PROXY_URL
+        self.bot = Bot(token=token)
         self.dp = Dispatcher(self.bot, storage=MemoryStorage())
         self.setup_handlers()
         self.dp.middleware.setup(LoggingMiddleware())
@@ -34,7 +33,8 @@ class TelegramBot:
         self.dp.register_message_handler(self.start_command_handler, commands=['start'])
         self.dp.register_callback_query_handler(self.start_game_handler, lambda c: c.data == 'button_start_game')
         self.dp.register_callback_query_handler(self.rules_handler, lambda c: c.data == 'button_rules')
-        # self.dp.register_callback_query_handler(self.send_random_images_handler, lambda c: c.data == 'button_get_memes')
+        # self.dp.register_callback_query_handler(self.send_random_images_handler, lambda c: c.data ==
+        # 'button_get_memes')
         self.dp.register_callback_query_handler(self.start_turn, lambda c: c.data == 'start_turn')
         self.dp.register_callback_query_handler(self.send_image_to_chat,
                                                 lambda query: query.data.startswith('image_path'))
@@ -45,7 +45,7 @@ class TelegramBot:
     @staticmethod
     async def start_command_handler(message: types.Message):
         chat_id = message.chat.id
-        db.clean_db(chat_id) # Очистка БД перед стартом новой игры
+        db.clean_db(chat_id)  # Очистка БД перед стартом новой игры
         if chat_id == 274921311:
             await message.reply('Привет! Я бот для игры в ..., добавь меня в чат, чтобы начать игру',
                                 reply_markup=kb.inline_kb6)
@@ -109,7 +109,7 @@ class TelegramBot:
         if users_hero:
             await self.bot.send_message(chat_id, f'{user_name}, ты уже выбрал {users_hero}')
         else:
-            db.db_insert_user_hero(chat_id, user_id, hero) # Записываем в БД героя, которого выбрал юзер
+            db.db_insert_user_hero(chat_id, user_id, hero)  # Записываем в БД героя, которого выбрал юзер
 
             last_keyboard = db.db_select_keyboard(_keyboard, chat_id)  # Получаем последнюю сохраненную клавиатуру
             last_keyboard['inline_keyboard'] = [x for x in last_keyboard["inline_keyboard"] if  # Удаляем кнопку
@@ -123,10 +123,12 @@ class TelegramBot:
                 db.db_update_keyboard(json.dumps(last_keyboard_for_save), _keyboard, chat_id)
 
                 # Отправляем обновленную клавиатуру
-                await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=last_keyboard)
+                await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id,
+                                                         reply_markup=last_keyboard)
                 await self.bot.send_message(chat_id, f'{user_name} выбрал {hero}')
 
-                if len(last_keyboard['inline_keyboard']) == 1 and last_keyboard['inline_keyboard'][0][0]['callback_data'] \
+                if len(last_keyboard['inline_keyboard']) == 1 and last_keyboard['inline_keyboard'][0][0][
+                    'callback_data'] \
                         == 'button_stop_pick_hero':
                     db.db_delete_keyboard(_keyboard, chat_id)
 
@@ -164,23 +166,21 @@ class TelegramBot:
         user_list = db.db_select_pool_users(chat_id)
         db.db_delete_sent_cards_in_turn(user_id, chat_id)
 
-
         for user in user_list:
             image_list = db.open_random_images(chat_id, user_id)
             if image_list:
                 for image_bytes, image_path in image_list:
-                # Генерация уникальных uuid для картинок
+                    # Генерация уникальных uuid для картинок
                     uniq_id = db.generate_uuid()
 
-                # Добавление картинки в базу данных
+                    # Добавление картинки в базу данных
                     db.add_image_to_database(uniq_id, user, chat_id, image_path, in_hand=True)
-
 
                     message = await self.bot.send_photo(user, photo=image_bytes,
                                                         reply_markup=kb.inline_kb3)
                     file_id = message.photo[-1].file_id  # получаем file_id картинки на сервере телеграмма
 
-                # Сохранение данных картинки в базу данных
+                    # Сохранение данных картинки в базу данных
                     db.save_user_chat_to_db(uniq_id, user, chat_id, file_id)
                     db.db_save_card_in_hand(uniq_id, user, chat_id, file_id, in_hand=True)
                     db.db_insert_user_done_turn(user, chat_id, sent_card=True)
@@ -270,7 +270,6 @@ class TelegramBot:
         await self.bot.delete_message(chat_id, message_30_sec.message_id)
         await self.bot.delete_message(chat_id, message_10_sec.message_id)
         db.db_update_state(chat_id, type_state, False)
-
 
 
 if __name__ == '__main__':
