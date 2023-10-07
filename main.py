@@ -34,8 +34,8 @@ class TelegramBot:
         self.dp.register_message_handler(self.start_command_handler, commands=['start'])
         self.dp.register_callback_query_handler(self.start_game_handler, lambda c: c.data == 'button_start_game')
         self.dp.register_callback_query_handler(self.rules_handler, lambda c: c.data == 'button_rules')
-        self.dp.register_callback_query_handler(self.send_random_images_handler, lambda c: c.data == 'button_get_memes')
-        self.dp.register_callback_query_handler(self.send_situation, lambda c: c.data == 'button_get_situation')
+        # self.dp.register_callback_query_handler(self.send_random_images_handler, lambda c: c.data == 'button_get_memes')
+        self.dp.register_callback_query_handler(self.start_turn, lambda c: c.data == 'start_turn')
         self.dp.register_callback_query_handler(self.send_image_to_chat,
                                                 lambda query: query.data.startswith('image_path'))
         self.dp.register_callback_query_handler(self.send_description, lambda c: c.data == 'button_description')
@@ -161,32 +161,29 @@ class TelegramBot:
         # Генерация картинок и запись отправленных в БД
         chat_id = callback_query.message.chat.id
         user_id = callback_query.from_user.id
-        image_list = db.open_random_images(chat_id, user_id)
+        user_list = db.db_select_pool_users(chat_id)
         db.db_delete_sent_cards_in_turn(user_id, chat_id)
-        # message_id = callback_query.message.message_id
-        # callback_data = callback_query.data
 
-        # current_keyboard = callback_query.message.reply_markup
-        # update_keyboard = keyboard.buttons.delete_button(current_keyboard, callback_data)
 
-        # await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=update_keyboard)
-
-        if image_list:
-            for image_bytes, image_path in image_list:
+        for user in user_list:
+            image_list = db.open_random_images(chat_id, user_id)
+            if image_list:
+                for image_bytes, image_path in image_list:
                 # Генерация уникальных uuid для картинок
-                uniq_id = db.generate_uuid()
+                    uniq_id = db.generate_uuid()
 
                 # Добавление картинки в базу данных
-                db.add_image_to_database(uniq_id, user_id, chat_id, image_path, in_hand=True)
+                    db.add_image_to_database(uniq_id, user, chat_id, image_path, in_hand=True)
 
-                message = await self.bot.send_photo(callback_query.from_user.id, photo=image_bytes,
-                                                    reply_markup=kb.inline_kb3)
-                file_id = message.photo[-1].file_id  # получаем file_id картинки на сервере телеграмма
+
+                    message = await self.bot.send_photo(user, photo=image_bytes,
+                                                        reply_markup=kb.inline_kb3)
+                    file_id = message.photo[-1].file_id  # получаем file_id картинки на сервере телеграмма
 
                 # Сохранение данных картинки в базу данных
-                db.save_user_chat_to_db(uniq_id, user_id, chat_id, file_id)
-                db.db_save_card_in_hand(uniq_id, user_id, chat_id, file_id, in_hand=True)
-                db.db_insert_user_done_turn(user_id, chat_id, sent_card=True)
+                    db.save_user_chat_to_db(uniq_id, user, chat_id, file_id)
+                    db.db_save_card_in_hand(uniq_id, user, chat_id, file_id, in_hand=True)
+                    db.db_insert_user_done_turn(user, chat_id, sent_card=True)
 
             # Кнопка возврата в чат
             chat_link = await self.bot.export_chat_invite_link(chat_id=callback_query.message.chat.id)
@@ -234,7 +231,7 @@ class TelegramBot:
                         db.db_insert_user_sent_card(user_id, chat_id, file_id)
                         db.db_update_user_done_turn(user_id, chat_id, sent_card=False)
 
-    async def send_situation(self, callback_query: types.CallbackQuery):
+    async def start_turn(self, callback_query: types.CallbackQuery):
 
         type_state = 'turn'
         chat_id = callback_query.message.chat.id
@@ -244,9 +241,10 @@ class TelegramBot:
         callback_data = callback_query.data
         current_keyboard = callback_query.message.reply_markup
         update_keyboard = kb.buttons.delete_button(current_keyboard, callback_data)
-        hero_pool = db.db_select_pool_users(chat_id)
+        hero_pool = db.db_select_pool_heroes(chat_id)
 
         db.db_update_state(chat_id, type_state, True)
+        await self.send_random_images_handler(callback_query)
 
         await self.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=update_keyboard)
 

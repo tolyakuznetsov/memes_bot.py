@@ -268,8 +268,20 @@ def db_select_check_count_players(chat_id):
     return count_users
 
 
-def db_select_pool_users(chat_id):
+def db_select_pool_heroes(chat_id):
     query = 'SELECT hero from user_hero ' \
+            'WHERE chat_id =?'
+    values = (chat_id,)
+    create_data_base.cursor.execute(query, values)
+    heroes = create_data_base.cursor.fetchall()
+    to_return = []
+    for i in heroes:
+        for j in i:
+            to_return.append(j)
+    return to_return
+
+def db_select_pool_users(chat_id):
+    query = 'SELECT user_id from user_hero ' \
             'WHERE chat_id =?'
     values = (chat_id,)
     create_data_base.cursor.execute(query, values)
